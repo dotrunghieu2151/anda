@@ -1,0 +1,18 @@
+import { Button, VerticalBox } from "std-widgets.slint";
+
+export component MainWindow inherits Window {
+    title: "Slint + C++ Boilerplate";
+    width: 400px;
+    height: 200px;
+
+    VerticalBox {
+        spacing: 10px;
+        alignment: center;
+        Button {
+            text: "Click Me!";
+            clicked => {
+                root.title = "Clicked!";
+            }
+        }
+    }
+}
