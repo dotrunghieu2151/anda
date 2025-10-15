@@ -16,8 +16,18 @@ set(CMAKE_CXX_FLAGS_FAST_INIT "-Ofast -DNDEBUG -march=native -mtune=native -funr
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_FAST ON)
 
-# vcpkg chain
-set(VCPKG_ROOT "${CMAKE_SOURCE_DIR}/.vcpkg")
-if (EXISTS "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+if (NOT DEFINED VCPKG_ROOT)
+    # if VCPKG_ROOT is not set, use the local vcpkg.cmake
+    include(${CMAKE_CURRENT_LIST_DIR}/vcpkg.cmake)
+    message(STATUS "Using local vcpkg.cmake")
+else()
+    # if VCPKG_ROOT is set, use the prebuilt vcpkg
     include("${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+    message(STATUS "Using prebuilt vcpkg.cmake")
+endif()
+
+if (ENABLE_LINTING)
+    include(${CMAKE_SOURCE_DIR}/cmake/config/IncludeHeaderCheck.cmake)
+    include(${CMAKE_SOURCE_DIR}/cmake/config/ClangTidyLint.cmake)
+    include(${CMAKE_SOURCE_DIR}/cmake/config/CppCheckLint.cmake)
 endif()

@@ -29,7 +29,19 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_FAST ON)
 # ---------------------------------
 # vcpkg integration
 # ---------------------------------
-set(VCPKG_ROOT "${CMAKE_SOURCE_DIR}/.vcpkg")
-if (EXISTS "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+if (NOT VCPKG_ROOT)
+    # if VCPKG_ROOT is not set, use the local vcpkg.cmake
+    include(${CMAKE_CURRENT_LIST_DIR}/vcpkg.cmake)
+    message(STATUS "Using local vcpkg.cmake")
+else()
+    # if VCPKG_ROOT is set, use the prebuilt vcpkg
     include("${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+    message(STATUS "Using prebuilt vcpkg.cmake")
+endif()
+
+if (ENABLE_LINTING)
+    include(${CMAKE_SOURCE_DIR}/cmake/config/IncludeHeaderCheck.cmake)
+    # clang-tidy has partial support for GCC, so we can still use it here.
+    include(${CMAKE_SOURCE_DIR}/cmake/config/ClangTidyLint.cmake)
+    include(${CMAKE_SOURCE_DIR}/cmake/config/CppCheckLint.cmake)
 endif()
