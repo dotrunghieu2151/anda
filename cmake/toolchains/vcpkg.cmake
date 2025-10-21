@@ -120,6 +120,10 @@ else()
     message(STATUS "[vcpkg] Already bootstrapped.")
 endif()
 
+# Register local custom registry
+set(VCPKG_FEATURE_FLAGS "registries" CACHE STRING "Enable custom registries" FORCE)
+set(VCPKG_OVERLAY_REGISTRIES "${CMAKE_CURRENT_LIST_DIR}/../../vcpkg-registry")
+
 # ---------------------------------------------------------------------------
 # Integrate toolchain
 # ---------------------------------------------------------------------------

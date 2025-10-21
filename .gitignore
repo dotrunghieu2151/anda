@@ -2,3 +2,5 @@
 .vscode
 CMakeUserPresets.json
 .vcpkg
+.rustup
+.cargo

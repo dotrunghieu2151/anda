@@ -1,0 +1,7 @@
+{
+  "name": "slint",
+  "version-string": "1.13.1",
+  "description": "Slint GUI toolkit for C++",
+  "homepage": "https://slint.dev",
+  "dependencies": ["vcpkg-cmake", "vcpkg-cmake-config", "corrosion"]
+}

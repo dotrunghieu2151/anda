@@ -15,6 +15,9 @@ include(ClangFormat)
 # dependencies
 find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
+find_package(Slint REQUIRED)
 
+get_target_property(slint_enabled_features Slint::Slint SLINT_ENABLED_FEATURES)
+message(STATUS "Slint enabled features: ${slint_enabled_features}")
 # subdirectories
 add_subdirectory(src)

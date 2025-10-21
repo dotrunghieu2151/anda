@@ -3,5 +3,12 @@
     "kind": "builtin",
     "baseline": "92d1d0e657ab9ae9278dc5df76ebf6e1ebdf82a3"
   },
-  "registries": []
+  "registries": [
+    {
+      "kind": "filesystem",
+      "path": "vcpkg-registry",
+      "baseline": "1.0.0",
+      "packages": ["slint", "rustbin", "corrosion"]
+    }
+  ]
 }

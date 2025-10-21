@@ -1,8 +1,12 @@
-#include <spdlog/spdlog.h>
+#include "app-window.h"
 
 int main()
 {
-    spdlog::info("Hello, World!");
+    auto ui_window = AppWindow::create();
 
+    ui_window->on_request_increase_value(
+        [&] { ui_window->set_counter(ui_window->get_counter() + 1); });
+
+    ui_window->run();
     return 0;
 }

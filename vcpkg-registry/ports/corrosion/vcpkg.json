@@ -1,0 +1,8 @@
+{
+  "name": "corrosion",
+  "version-string": "0.5.2",
+  "description": "Corrosion is a library for building native GUI apps in Rust, using third-party GUI libraries",
+  "homepage": "https://corrosion-rs.org/",
+  "license": "MIT",
+  "dependencies": ["vcpkg-cmake", "vcpkg-cmake-config"]
+}
