@@ -34,20 +34,43 @@ vcpkg_extract_source_archive_ex(
 
 # Copy everything to tools directory
 file(INSTALL
-    DESTINATION "${CURRENT_PACKAGES_DIR}/tools/rust/bin/cargo"
+    DESTINATION "${CURRENT_PACKAGES_DIR}/tools/rust"
     TYPE DIRECTORY
     FILES "${SOURCE_PATH}/cargo"
 )
 
 file(INSTALL
-    DESTINATION "${CURRENT_PACKAGES_DIR}/tools/rust/bin/rustc"
+    DESTINATION "${CURRENT_PACKAGES_DIR}/tools/rust"
     TYPE DIRECTORY
     FILES "${SOURCE_PATH}/rustc"
 )
 
-# Add to PATH so dependent ports can use rustc, cargo, etc.
-vcpkg_add_to_path("${CURRENT_PACKAGES_DIR}/tools/rust/bin/cargo")
-vcpkg_add_to_path("${CURRENT_PACKAGES_DIR}/tools/rust/bin/rustc")
+configure_file("${CMAKE_CURRENT_LIST_DIR}/rustbinConfig.cmake"
+               "${CURRENT_PACKAGES_DIR}/share/rustbin/rustbinConfig.cmake"
+               @ONLY)
+
+
+               # Fix permissions cross-platform
+if(VCPKG_TARGET_IS_LINUX OR VCPKG_TARGET_IS_OSX)
+    message(STATUS "Fixing executable permissions for Rust binaries...")
+    file(GLOB RUST_BINARIES "${CURRENT_PACKAGES_DIR}/tools/rust/rustc/bin/*" "${CURRENT_PACKAGES_DIR}/tools/rust/cargo/bin/*")
+    foreach(f ${RUST_BINARIES})
+        file(CHMOD ${f}
+            PERMISSIONS
+            OWNER_READ OWNER_WRITE OWNER_EXECUTE
+            GROUP_READ GROUP_EXECUTE
+            WORLD_READ WORLD_EXECUTE
+        )
+    endforeach()
+
+    # if(APPLE)
+    #     # Remove Gatekeeper quarantine
+    #     execute_process(
+    #         COMMAND xattr -dr com.apple.quarantine "${CURRENT_PACKAGES_DIR}/tools/rust/bin"
+    #         COMMAND_ERROR_IS_FATAL ANY
+    #     )
+    # endif()
+endif()
 
 # Install license info (if available)
 if(EXISTS "${RUST_ROOT}/LICENSE.txt")

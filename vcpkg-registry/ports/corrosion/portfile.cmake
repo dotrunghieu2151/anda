@@ -8,7 +8,7 @@ vcpkg_from_github(
 vcpkg_cmake_configure(
     SOURCE_PATH "${CORROSION_SOURCE}"
 )
-vcpkg_cmake_build()
+
 vcpkg_cmake_install()
 
 vcpkg_cmake_config_fixup(PACKAGE_NAME Corrosion CONFIG_PATH lib/cmake/Corrosion)
