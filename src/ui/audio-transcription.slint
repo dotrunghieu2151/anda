@@ -1,0 +1,443 @@
+import { Button, ComboBox, VerticalBox, HorizontalBox, ScrollView, GroupBox } from "std-widgets.slint";
+
+// Global adapter for audio device data
+export global AudioDeviceAdapter {
+    in-out property <[string]> input-devices: ["Default Microphone", "USB Microphone", "Headset Mic"];
+    in-out property <[string]> output-devices: ["Default Speaker", "Headphones", "USB Audio"];
+    in-out property <int> selected-input-device: 0;
+    in-out property <int> selected-output-device: 0;
+}
+
+// Global adapter for language data
+export global LanguageAdapter {
+    in-out property <[string]> languages: ["English", "Spanish", "French", "German", "Chinese", "Japanese", "Korean", "Arabic"];
+    in-out property <int> from-language: 0;
+    in-out property <int> to-language: 1;
+}
+
+// Global adapter for transcription data
+export global TranscriptionAdapter {
+    in-out property <string> transcription-text: "Original transcription will appear here...";
+    in-out property <string> translation-text: "Translation will appear here...";
+    in-out property <bool> is-recording: false;
+    in-out property <float> recording-duration: 0.0; // in seconds
+    
+    // Audio visualization data (0.0 to 1.0 range)
+    in-out property <[float]> audio-levels: [
+        0.3, 0.5, 0.7, 0.4, 0.6, 0.8, 0.5, 0.3, 0.6, 0.7,
+        0.4, 0.5, 0.9, 0.6, 0.4, 0.5, 0.7, 0.3, 0.6, 0.8,
+        0.5, 0.4, 0.6, 0.7, 0.5, 0.8, 0.4, 0.6, 0.7, 0.5
+    ];
+    
+    callback start-recording();
+    callback stop-recording();
+    callback save-audio();
+    callback clear-transcription();
+}
+
+// Audio visualizer component with line graph
+component AudioVisualizer {
+    in property <[float]> levels: TranscriptionAdapter.audio-levels;
+    in property <bool> is-active: TranscriptionAdapter.is-recording;
+    
+    height: 150px;
+    
+    Rectangle {
+        background: #1a1a2e;
+        border-radius: 8px;
+        
+        Rectangle {
+            x: 20px;
+            y: 20px;
+            width: parent.width - 40px;
+            height: parent.height - 40px;
+            clip: true;
+            
+            // Grid lines for reference (horizontal)
+            for i in 5: Rectangle {
+                y: parent.height * i / 5;
+                width: parent.width;
+                height: 1px;
+                background: #2a2a3e;
+                opacity: 0.3;
+            }
+            
+            // Filled area under the graph
+            for level[index] in levels: Rectangle {
+                private property <length> point-x: parent.width * index / (levels.length - 1);
+                private property <length> point-height: parent.height * level;
+                
+                x: point-x - 1px;
+                y: parent.height - point-height;
+                width: 2px;
+                height: point-height;
+                background: @linear-gradient(180deg, is-active ? #00d9ff50 : #4a4a5e50 0%, transparent 100%);
+                
+                animate background {
+                    duration: 300ms;
+                }
+            }
+            
+            // Smooth line approximation using thin vertical bars
+            for level[index] in levels: Rectangle {
+                private property <length> point-x: parent.width * index / (levels.length - 1);
+                private property <length> point-y: parent.height - (parent.height * level);
+                private property <length> next-y: parent.height - (parent.height * (index + 1 < levels.length ? levels[index + 1] : level));
+                
+                // Draw vertical line at each point
+                x: point-x - 1.5px;
+                y: min(point-y, next-y);
+                width: 3px;
+                height: max(3px, abs(next-y - point-y) + 3px);
+                background: is-active ? #00d9ff : #4a4a5e;
+                border-radius: 1.5px;
+                
+                animate background {
+                    duration: 300ms;
+                }
+            }
+            
+            // Data point markers
+            for level[index] in levels: Rectangle {
+                private property <length> point-x: parent.width * index / (levels.length - 1);
+                private property <length> point-y: parent.height - (parent.height * level);
+                
+                x: point-x - 3px;
+                y: point-y - 3px;
+                width: 6px;
+                height: 6px;
+                border-radius: 3px;
+                background: is-active ? #00f5ff : #5a5a6e;
+                border-width: 1px;
+                border-color: #1a1a2e;
+                
+                // Subtle glow effect when active
+                opacity: is-active ? 1.0 : 0.6;
+                
+                animate background {
+                    duration: 300ms;
+                }
+                
+                animate opacity {
+                    duration: 300ms;
+                }
+            }
+        }
+    }
+}
+
+// Device selector component
+component DeviceSelector {
+    in property <string> label;
+    in property <[string]> devices;
+    in-out property <int> selected-device;
+    
+    VerticalLayout {
+        spacing: 8px;
+        
+        Text {
+            text: label;
+            font-size: 14px;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+        
+        ComboBox {
+            model: devices;
+            current-index <=> selected-device;
+        }
+    }
+}
+
+// Language selector component
+component LanguageSelector {
+    in property <string> label;
+    in property <[string]> languages;
+    in-out property <int> selected-language;
+    
+    VerticalLayout {
+        spacing: 8px;
+        
+        Text {
+            text: label;
+            font-size: 14px;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+        
+        ComboBox {
+            model: languages;
+            current-index <=> selected-language;
+        }
+    }
+}
+
+// Text display component
+component TextDisplay {
+    in property <string> title;
+    in property <string> content;
+    in property <color> accent-color: #00d9ff;
+    
+    preferred-height: 200px;
+    
+    GroupBox {
+        title: title;
+        
+        ScrollView {
+            Text {
+                width: parent.visible-width;
+                text: content;
+                font-size: 14px;
+                color: #e0e0e0;
+                wrap: word-wrap;
+                horizontal-alignment: left;
+                vertical-alignment: top;
+            }
+        }
+    }
+}
+
+// Recording status bar
+component StatusBar {
+    in property <bool> is-recording;
+    in property <float> duration;
+    
+    private property <string> formatted-time: {
+        let minutes = floor(duration / 60);
+        let seconds = floor(mod(duration, 60));
+        let mins-str = minutes < 10 ? "0" + minutes : "" + minutes;
+        let secs-str = seconds < 10 ? "0" + seconds : "" + seconds;
+        mins-str + ":" + secs-str
+    };
+    
+    height: 40px;
+    
+    Rectangle {
+        background: is-recording ? #2d1f3d : #1a1a2e;
+        border-radius: 8px;
+        
+        animate background {
+            duration: 300ms;
+        }
+        
+        HorizontalLayout {
+            padding: 10px;
+            spacing: 15px;
+            alignment: center;
+            
+            Rectangle {
+                width: 12px;
+                height: 12px;
+                border-radius: 6px;
+                background: is-recording ? #ff3366 : #4a4a5e;
+                
+                if is-recording: Rectangle {
+                    width: parent.width;
+                    height: parent.height;
+                    border-radius: parent.border-radius;
+                    background: #ff3366;
+                    opacity: 0.5;
+                    
+                    states [
+                        pulse when is-recording: {
+                            opacity: 0;
+                            width: parent.width * 1.5;
+                            height: parent.height * 1.5;
+                            
+                            in {
+                                animate opacity, width, height {
+                                    duration: 1s;
+                                    iteration-count: -1;
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+            
+            Text {
+                text: is-recording ? "Recording: " + formatted-time : "Ready";
+                font-size: 14px;
+                font-weight: 700;
+                color: is-recording ? #ff3366 : #4a4a5e;
+            }
+        }
+    }
+}
+
+// Control button component
+component ControlButton {
+    in property <string> text;
+    in property <color> button-color: #00d9ff;
+    in property <bool> enabled: true;
+    
+    callback clicked;
+    
+    min-width: 120px;
+    min-height: 40px;
+    
+    Rectangle {
+        border-radius: 8px;
+        background: touch-area.has-hover ? button-color.darker(0.2) : button-color;
+        opacity: enabled ? 1.0 : 0.5;
+        
+        animate background {
+            duration: 200ms;
+        }
+        
+        touch-area := TouchArea {
+            clicked => {
+                if (enabled) {
+                    root.clicked();
+                }
+            }
+        }
+        
+        Text {
+            text: root.text;
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+    }
+}
+
+// Main application window
+export component AppWindow inherits Window {
+    title: "Audio Transcription App";
+    background: #0f0f1e;
+    preferred-width: 1000px;
+    preferred-height: 800px;
+    min-width: 800px;
+    min-height: 600px;
+    
+    VerticalLayout {
+        padding: 20px;
+        spacing: 20px;
+        
+        // Header
+        Text {
+            text: "Audio Transcription & Translation";
+            font-size: 24px;
+            font-weight: 800;
+            color: #00d9ff;
+            horizontal-alignment: center;
+        }
+        
+        // Device Selection Section
+        HorizontalLayout {
+            spacing: 20px;
+            
+            DeviceSelector {
+                label: "Input Device";
+                devices: AudioDeviceAdapter.input-devices;
+                selected-device <=> AudioDeviceAdapter.selected-input-device;
+            }
+            
+            DeviceSelector {
+                label: "Output Device";
+                devices: AudioDeviceAdapter.output-devices;
+                selected-device <=> AudioDeviceAdapter.selected-output-device;
+            }
+        }
+        
+        // Status Bar
+        StatusBar {
+            is-recording: TranscriptionAdapter.is-recording;
+            duration: TranscriptionAdapter.recording-duration;
+        }
+        
+        // Audio Visualizer
+        AudioVisualizer {
+            levels: TranscriptionAdapter.audio-levels;
+            is-active: TranscriptionAdapter.is-recording;
+        }
+        
+        // Language Selection
+        HorizontalLayout {
+            spacing: 20px;
+            
+            LanguageSelector {
+                label: "From Language";
+                languages: LanguageAdapter.languages;
+                selected-language <=> LanguageAdapter.from-language;
+            }
+            
+            Rectangle {
+                width: 40px;
+                
+                Text {
+                    text: "→";
+                    font-size: 24px;
+                    color: #00d9ff;
+                    y: parent.height / 2 + 10px;
+                }
+            }
+            
+            LanguageSelector {
+                label: "To Language";
+                languages: LanguageAdapter.languages;
+                selected-language <=> LanguageAdapter.to-language;
+            }
+        }
+        
+        // Transcription and Translation Display
+        HorizontalLayout {
+            spacing: 20px;
+            vertical-stretch: 1;
+            
+            TextDisplay {
+                title: "Transcription";
+                content: TranscriptionAdapter.transcription-text;
+                accent-color: #00d9ff;
+            }
+            
+            TextDisplay {
+                title: "Translation";
+                content: TranscriptionAdapter.translation-text;
+                accent-color: #9d4edd;
+            }
+        }
+        
+        // Control Buttons
+        HorizontalLayout {
+            spacing: 15px;
+            alignment: center;
+            
+            if !TranscriptionAdapter.is-recording: ControlButton {
+                text: "Start Recording";
+                button-color: #00d9ff;
+                clicked => {
+                    TranscriptionAdapter.start-recording();
+                }
+            }
+            
+            if TranscriptionAdapter.is-recording: ControlButton {
+                text: "Stop Recording";
+                button-color: #ff3366;
+                clicked => {
+                    TranscriptionAdapter.stop-recording();
+                }
+            }
+            
+            ControlButton {
+                text: "Save Audio";
+                button-color: #4ecdc4;
+                enabled: !TranscriptionAdapter.is-recording;
+                clicked => {
+                    TranscriptionAdapter.save-audio();
+                }
+            }
+            
+            ControlButton {
+                text: "Clear";
+                button-color: #6c757d;
+                enabled: !TranscriptionAdapter.is-recording;
+                clicked => {
+                    TranscriptionAdapter.clear-transcription();
+                }   
+            }
+        }
+    }
+}
+

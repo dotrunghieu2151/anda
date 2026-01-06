@@ -1,0 +1,35 @@
+export struct WaveformVisualizerState {
+    height: length,
+    width: length,
+}
+
+export component WaveformVisualizer {
+    in property <string> drawCommands;
+    in property <color> background: #111;
+    
+    out property <WaveformVisualizerState> waveformState: {
+        height: path.height,
+        width: path.width,
+    };
+
+
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        background: root.background;
+
+        path:= Path {
+            x: 0;
+            y: 0;
+            commands: drawCommands;
+            width: parent.width;
+            height: parent.height;
+            viewbox-height: parent.height / 1px;
+            viewbox-width: parent.width / 1px;
+            viewbox-x: 0;
+            viewbox-y: 0;
+            stroke: #00ff88;
+            stroke-width: 1px;
+        }
+    }
+}

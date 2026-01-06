@@ -1,7 +1,12 @@
 import { Button, VerticalBox } from "std-widgets.slint";
+import { WaveformVisualizer, WaveformVisualizerState } from "./wave-form.slint";
 
 export component AppWindow inherits Window {
     in-out property<int> counter: 42;
+    in property<string> drawCommands;
+    out property <WaveformVisualizerState> waveformState: waveform.waveformState;
+
+
     callback request-increase-value();
     VerticalBox {
         Text {
@@ -14,4 +19,12 @@ export component AppWindow inherits Window {
             }
         }
      }
+
+    waveform := WaveformVisualizer {
+        width: parent.width;
+        height: parent.height * 0.5;
+        y: parent.height * 0.1;
+        drawCommands: drawCommands;
+    }
+
 }
