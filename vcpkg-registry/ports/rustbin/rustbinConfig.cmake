@@ -1,3 +1,10 @@
-set(RUST_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../tools/rust")
-set(RUSTC_EXECUTABLE "${RUST_ROOT}/rustc/bin")
-set(CARGO_EXECUTABLE "${RUST_ROOT}/cargo/bin")
+get_filename_component(PACKAGE_PREFIX_DIR "${CMAKE_CURRENT_LIST_DIR}/../../" ABSOLUTE)
+
+set(RUST_ROOT "${PACKAGE_PREFIX_DIR}/tools/rustbin")
+if (VCPKG_TARGET_IS_WINDOWS)
+    set(RUSTBIN_RUSTC_EXECUTABLE "${RUST_ROOT}/rustc/bin/rustc.exe")
+    set(RUSTBIN_CARGO_EXECUTABLE "${RUST_ROOT}/cargo/bin/cargo.exe")
+else()
+    set(RUSTBIN_RUSTC_EXECUTABLE "${RUST_ROOT}/rustc/bin/rustc")
+    set(RUSTBIN_CARGO_EXECUTABLE "${RUST_ROOT}/cargo/bin/cargo")
+endif()

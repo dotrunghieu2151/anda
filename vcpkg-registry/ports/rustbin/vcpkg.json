@@ -1,6 +1,6 @@
 {
   "name": "rustbin",
-  "version-string": "1.85.0",
+  "version-string": "1.88.0",
   "description": "Rust toolchain (rustup, rustc, cargo) installer for vcpkg with cross-platform support",
   "homepage": "https://www.rust-lang.org/",
   "license": "MIT",

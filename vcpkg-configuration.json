@@ -1,14 +1,14 @@
 {
   "default-registry": {
     "kind": "builtin",
-    "baseline": "92d1d0e657ab9ae9278dc5df76ebf6e1ebdf82a3"
+    "baseline": "af752f21c9d79ba3df9cb0250ce2233933f58486"
   },
   "registries": [
     {
       "kind": "filesystem",
       "path": "vcpkg-registry",
       "baseline": "1.0.0",
-      "packages": ["slint", "rustbin", "corrosion"]
+      "packages": ["slint", "rustbin", "corrosion", "soxr-config"]
     }
   ]
 }

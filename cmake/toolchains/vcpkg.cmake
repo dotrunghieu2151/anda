@@ -10,7 +10,7 @@
 # ---------------------------------------------------------------------------
 # Configurable settings
 # ---------------------------------------------------------------------------
-cmake_minimum_required(VERSION 4.1.2)
+cmake_minimum_required(VERSION 3.31.10)
 
 set(VCPKG_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.vcpkg" CACHE PATH "Path to vcpkg root")
 set(VCPKG_CONFIG_FILE "${CMAKE_CURRENT_LIST_DIR}/../../vcpkg-configuration.json" CACHE FILEPATH "vcpkg configuration JSON")

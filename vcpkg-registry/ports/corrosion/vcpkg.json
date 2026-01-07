@@ -4,5 +4,5 @@
   "description": "Corrosion is a library for building native GUI apps in Rust, using third-party GUI libraries",
   "homepage": "https://corrosion-rs.org/",
   "license": "MIT",
-  "dependencies": ["vcpkg-cmake", "vcpkg-cmake-config"]
+  "dependencies": ["vcpkg-cmake", "vcpkg-cmake-config", { "name": "rustbin", "version>=": "1.88.0", "host": true }]
 }

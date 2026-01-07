@@ -18,11 +18,11 @@ else()
     message(STATUS "Using MSVC compiler")
     set(CMAKE_GENERATOR_PLATFORM "x64" CACHE STRING "Target architecture")
 
-    # Modern C++ & strict warnings
+    # # Modern C++ & strict warnings
     set(BASE_FLAGS "/W4 /permissive- /EHsc /Zc:__cplusplus /utf-8")
     set(CMAKE_CXX_FLAGS_INIT "${BASE_FLAGS}")
 
-    set(CMAKE_CXX_FLAGS_DEBUG_INIT "/Od /Zi /MDd /DDEBUG")
+    set(CMAKE_CXX_FLAGS_DEBUG_INIT "/Od /Zi /MTd /DDEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "/O2 /DNDEBUG /GL /Gw")
     set(CMAKE_CXX_FLAGS_FAST_INIT "/Ox /Ot /Oi /GL /Gw /fp:fast /DNDEBUG")
 

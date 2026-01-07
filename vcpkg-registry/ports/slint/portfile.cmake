@@ -1,7 +1,7 @@
 # ==============================
 # Portfile for Slint (custom)
 # ==============================
-cmake_minimum_required(VERSION 4.1.2)
+cmake_minimum_required(VERSION 3.31.10)
 # 1. Download Slint source
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
@@ -14,6 +14,8 @@ vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}/api/cpp"
     OPTIONS
         -DSLINT_FEATURE_LIVE_PREVIEW=ON
+        -DRust_COMPILER=${RUSTBIN_RUSTC_EXECUTABLE}
+        -DRust_CARGO=${RUSTBIN_CARGO_EXECUTABLE}
 )
 
 message(STATUS "Configuring Slint ${CURRENT_PACKAGES_DIR}")

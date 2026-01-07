@@ -27,7 +27,24 @@
       },
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/windows-msvc.cmake",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_CXX_STANDARD": "20"
+      }
+    },
+    {
+      "name": "windows-clang",
+      "inherits": "default",
+      "displayName": "Windows Clang",
+      "description": "This build is only available on Windows with clang-cl",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/windows-clang.cmake",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_CXX_STANDARD": "20"
       }
     },
     {
@@ -105,6 +122,27 @@
       "configuration": "Fast"
     },
     {
+      "name": "windows-clang-debug",
+      "configurePreset": "windows-clang",
+      "displayName": "Debug",
+      "description": "Build the project with Ninja in Debug mode on Windows with clang-cl",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-clang-release",
+      "configurePreset": "windows-clang",
+      "displayName": "Release",
+      "description": "Build the project with Ninja in Release mode on Windows with clang-cl",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-clang-fast",
+      "configurePreset": "windows-clang",
+      "displayName": "Fast",
+      "description": "Build the project with Ninja in Fast mode on Windows with clang-cl",
+      "configuration": "Fast"
+    },
+    {
       "name": "linux-debug",
       "configurePreset": "linux",
       "displayName": "Debug",
@@ -162,6 +200,17 @@
     {
       "name": "windows-test",
       "configurePreset": "windows",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": true
+      }
+    },
+    {
+      "name": "windows-clang-test",
+      "configurePreset": "windows-clang",
       "output": {
         "outputOnFailure": true
       },
