@@ -1,0 +1,93 @@
+// Todo Page - allows creating and managing Todos with nested Tasks
+
+import {
+    VerticalBox,
+    HorizontalBox,
+    Button,
+    LineEdit,
+    GroupBox,
+} from "std-widgets.slint";
+import { AppHeader } from "../components/header.slint";
+import { TodoItem } from "../modules/todo/todo-item.slint";
+import { Todo, Task } from "../modules/todo/todo-types.slint";
+
+export global TodoPageViewModel {
+    in-out property <[Todo]> todos: [];
+    callback todo-added();
+    callback todo-deleted();
+    callback todo-updated();
+}
+
+export component TodoPage {
+    private property <string> new-todo-title: "";
+    private property <string> new-todo-description: "";
+    VerticalBox {
+        spacing: 16px;
+        padding: 20px;
+        
+        // Header
+        AppHeader {
+            title: @tr("TodoPage.title");
+            subtitle: @tr("TodoPage.subtitle");
+        }
+        
+        // Create new Todo section
+        GroupBox {
+            title: @tr("TodoPage.create-new");
+            VerticalBox {
+                spacing: 12px;
+                LineEdit {
+                    placeholder-text: @tr("TodoPage.todo-title-placeholder");
+                    text <=> root.new-todo-title;
+                }
+
+                LineEdit {
+                    placeholder-text: @tr("TodoPage.todo-description-placeholder");
+                    text <=> root.new-todo-description;
+                }
+
+                Button {
+                    text: @tr("TodoPage.add-todo");
+                    enabled: !root.new-todo-title.is-empty;
+                    clicked => {
+                        // Trigger callback - C++ will read new-todo-title and new-todo-description
+                        // and create the Todo struct
+                        TodoPageViewModel.todo-added();
+                        root.new-todo-title = "";
+                        root.new-todo-description = "";
+                    }
+                }
+            }
+        }
+        
+        // Todos list
+        VerticalBox {
+            spacing: 16px;
+            vertical-stretch: 1;
+            if TodoPageViewModel.todos.length == 0: Text {
+                text: @tr("TodoPage.no-todos");
+                font-size: 16px;
+                color: #6c757d;
+                horizontal-alignment: center;
+            }
+            for todo[index] in TodoPageViewModel.todos: TodoItem {
+                todo-data: todo;
+                todo-deleted => {
+                    TodoPageViewModel.todo-deleted();
+                }
+                task-checked-changed => {
+                    TodoPageViewModel.todo-updated();
+                }
+                task-add-requested => {
+                    TodoPageViewModel.todo-updated();
+                }
+                sub-task-add-requested => {
+                    TodoPageViewModel.todo-updated();
+                }
+                task-expanded-changed => {
+                    TodoPageViewModel.todo-updated();
+                }
+            }
+        }
+    }
+}

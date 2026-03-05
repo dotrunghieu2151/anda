@@ -1,8 +1,8 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH CORROSION_SOURCE
     REPO "corrosion-rs/corrosion"
-    REF "v0.5.2"
-    SHA512 2510d4d0484fc12a6b429244b283515fda650b52ea74fbfdcc141298b452b20e2bef800b8f8a573a2bf509f4147ecb2d68e795cbd86cc8edd092f57ccff8b86b
+    REF "v0.6.0"
+    SHA512 e1f7b74f9757057e9f2e929f3d3bcf73583b9fd1cd717038d285d8b3730ec0ba8c5fbd0986b2523080736e015a37a17de640bee14d8ffb5d4a253d3ebe8800c5
 )
 vcpkg_cmake_configure(
     SOURCE_PATH "${CORROSION_SOURCE}"

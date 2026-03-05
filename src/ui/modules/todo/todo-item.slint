@@ -1,0 +1,130 @@
+// Todo item component - represents a single Todo with its tasks
+// Supports nested tasks and progress calculation
+
+import {
+    VerticalBox,
+    HorizontalBox,
+    Button,
+    GroupBox,
+} from "std-widgets.slint";
+import { TaskItem } from "./task-item.slint";
+import { Todo, Task } from "./todo-types.slint";
+
+// Helper component to conditionally render tasks based on visibility
+// C++ manages the 'visible' property based on parent expanded state
+component TaskItemWrapper {
+    in property <Task> task-data;
+    callback task-checked-changed();
+    callback sub-task-add-requested();
+    callback task-expanded-changed();
+    
+    // Only render if task is visible (set by C++ based on parent expanded state)
+    if root.task-data.visible: TaskItem {
+        task-data: root.task-data;
+        task-checked-changed => {
+            root.task-checked-changed();
+        }
+        sub-task-add-requested => {
+            root.sub-task-add-requested();
+        }
+        task-expanded-changed => {
+            root.task-expanded-changed();
+        }
+    }
+}
+
+export component TodoItem {
+    in property <Todo> todo-data;
+    callback todo-deleted();
+    callback task-checked-changed();
+    callback task-add-requested();
+    callback sub-task-add-requested();
+    callback task-expanded-changed();
+    
+    // Calculate total tasks
+    // Note: Sub-tasks removed from struct due to Slint recursive struct limitation
+    // C++ will need to manage nested structure separately
+    private property <int> total-tasks: root.todo-data.tasks.length;
+    
+    // Calculate checked tasks
+    // Note: Slint doesn't support for loops in property expressions
+    // This will be calculated by C++ and passed as a property, or
+    // we can use a function. For now, using a simple approach.
+    private property <int> checked-tasks: 0;  // Will be set by C++
+    
+    private property <float> progress: total-tasks > 0 ? (checked-tasks / total-tasks) * 100.0 : 0.0;
+    GroupBox {
+        title: root.todo-data.title;
+        VerticalBox {
+            spacing: 12px;
+            
+            // Description
+            if !root.todo-data.description.is-empty: Text {
+                text: root.todo-data.description;
+                font-size: 14px;
+                color: #6c757d;
+                wrap: word-wrap;
+            }
+            
+            // Progress bar
+            Rectangle {
+                height: 8px;
+                background: #1a1a2e;
+                border-radius: 4px;
+                Rectangle {
+                    width: parent.width * (root.progress / 100.0);
+                    height: parent.height;
+                    background: root.progress == 100.0 ? #00ff88 : #00d9ff;
+                    border-radius: parent.border-radius;
+                    animate width {
+                        duration: 300ms;
+                        easing: ease-out;
+                    }
+                }
+            }
+            
+            // Progress text
+            Text {
+                text: @tr("TodoItem.progress") + ": " + floor(root.progress) + "% (" + root.checked-tasks + "/" + root.total-tasks + ")";
+                font-size: 12px;
+                color: #6c757d;
+            }
+            
+            // Add Task button
+            Button {
+                text: @tr("TodoItem.add-task");
+                clicked => {
+                    root.task-add-requested();
+                }
+            }
+            
+            // Task list
+            VerticalBox {
+                spacing: 8px;
+                for task[index] in root.todo-data.tasks: TaskItemWrapper {
+                    task-data: task;
+                    task-checked-changed => {
+                        root.task-checked-changed();
+                    }
+                    sub-task-add-requested => {
+                        root.sub-task-add-requested();
+                    }
+                    task-expanded-changed => {
+                        root.task-expanded-changed();
+                    }
+                }
+            }
+            
+            // Actions
+            HorizontalBox {
+                spacing: 8px;
+                Button {
+                    text: @tr("TodoItem.delete");
+                    clicked => {
+                        root.todo-deleted();
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,72 @@
+// Status bar component showing recording state and duration
+
+export component StatusBar {
+    in property <bool> is-recording: false;
+    in property <bool> is-paused: false;
+    in property <float> duration: 0.0; // in seconds
+    
+    private property <string> formatted-time: {
+        let minutes = floor(duration / 60);
+        let seconds = floor(mod(duration, 60));
+        let mins-str = minutes < 10 ? "0" + minutes : "" + minutes;
+        let secs-str = seconds < 10 ? "0" + seconds : "" + seconds;
+        return mins-str + ":" + secs-str;
+    };
+    private property <string> status-text: root.is-paused ? @tr("StatusBar.paused") + ": " + formatted-time : (root.is-recording ? @tr("StatusBar.recording") + ": " + formatted-time : @tr("StatusBar.ready"));
+    private property <color> status-color: root.is-paused ? #ffa500 : (root.is-recording ? #ff3366 : #4a4a5e);
+    height: 48px;
+    Rectangle {
+        background: root.is-recording ? #2d1f3d : #1a1a2e;
+        border-radius: 8px;
+        border-width: 1px;
+        border-color: root.is-recording ? status-color : #2a2a3e;
+        animate background {
+            duration: 300ms;
+            easing: ease-out;
+        }
+        HorizontalLayout {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            padding-left: 16px;
+            padding-right: 16px;
+            spacing: 12px;
+            alignment: center;
+            
+            // Status indicator dot
+            Rectangle {
+                width: 12px;
+                height: 12px;
+                border-radius: 6px;
+                background: status-color;
+                if root.is-recording && !root.is-paused: Rectangle {
+                    width: parent.width;
+                    height: parent.height;
+                    border-radius: parent.border-radius;
+                    background: status-color;
+                    opacity: 0.5;
+                    states [
+                        pulse when root.is-recording && !root.is-paused: {
+                            opacity: 0;
+                            width: parent.width * 1.5;
+                            height: parent.height * 1.5;
+                            in {
+                                animate opacity, width, height {
+                                    duration: 1s;
+                                    iteration-count: -1;
+                                    easing: ease-in-out;
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+
+            Text {
+                text: status-text;
+                font-size: 15px;
+                font-weight: 700;
+                color: status-color;
+            }
+        }
+    }
+}

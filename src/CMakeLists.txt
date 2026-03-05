@@ -19,7 +19,11 @@ if(APPLE)
     )
 endif()
 
-slint_target_sources(${PROJECT_NAME} ui/app-window.slint)
+# Slint UI files - app-window.slint is the main entry point
+# It imports all component files automatically
+slint_target_sources(${PROJECT_NAME} 
+        ui/app-window.slint
+)
 
 
 # Include asset copying utility

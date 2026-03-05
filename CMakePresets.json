@@ -9,7 +9,8 @@
       "binaryDir": "${sourceDir}/.build/${presetName}",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/.vcpkg/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_CXX_STANDARD": "20"
       },
       "environment": {
         "SLINT_LIVE_PREVIEW": "1"
@@ -26,9 +27,7 @@
         "rhs": "Windows"
       },
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/windows-msvc.cmake",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CMAKE_CXX_STANDARD": "20"
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/windows-msvc.cmake"
       }
     },
     {
@@ -42,9 +41,7 @@
         "rhs": "Windows"
       },
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/windows-clang.cmake",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CMAKE_CXX_STANDARD": "20"
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/windows-clang.cmake"
       }
     },
     {
@@ -58,8 +55,7 @@
         "rhs": "Linux"
       },
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/linux-gcc.cmake",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/linux-gcc.cmake"
       }
     },
     {
@@ -73,8 +69,7 @@
         "rhs": "Darwin"
       },
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/macos-clang.cmake",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/macos-clang.cmake"
       }
     }
   ],

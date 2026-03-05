@@ -1,0 +1,80 @@
+// Example Settings Page implementation
+import { VerticalBox } from "std-widgets.slint";
+import { AppHeader } from "../components/header.slint";
+import { Button, HorizontalBox } from "std-widgets.slint";
+import { DeviceSelectionSection } from "../components/device-selector.slint";
+import {
+    LanguageSelectionSection,
+} from "../components/language-selector.slint";
+import { AppWindowViewModel } from "../app-window-global.slint";
+
+
+// Page-specific global adapter
+export global SettingsPageAdapter {
+    in-out property <[string]> input-devices: [];
+    in-out property <[string]> output-devices: [];
+    in-out property <int> selected-input-index: 0;
+    in-out property <int> selected-output-index: 0;
+    in-out property <[string]> languages: [];
+    in-out property <int> source-language-index: 0;
+    in-out property <int> target-language-index: 1;
+    callback input-device-changed(int);
+    callback output-device-changed(int);
+    callback source-language-changed(int);
+    callback target-language-changed(int);
+    callback save-settings();
+}
+
+// Settings page component
+export component SettingsPage {
+    VerticalBox {
+        spacing: 16px;
+        padding: 20px;
+        AppHeader {
+            title: @tr("SettingsPage.title");
+            subtitle: @tr("SettingsPage.subtitle");
+        }
+
+        DeviceSelectionSection {
+            input-devices: SettingsPageAdapter.input-devices;
+            output-devices: SettingsPageAdapter.output-devices;
+            selected-input-index <=> SettingsPageAdapter.selected-input-index;
+            selected-output-index <=> SettingsPageAdapter.selected-output-index;
+            input-device-changed => {
+                SettingsPageAdapter.input-device-changed(SettingsPageAdapter.selected-input-index);
+            }
+            output-device-changed => {
+                SettingsPageAdapter.output-device-changed(SettingsPageAdapter.selected-output-index);
+            }
+        }
+
+        LanguageSelectionSection {
+            languages: SettingsPageAdapter.languages;
+            source-language-index <=> SettingsPageAdapter.source-language-index;
+            target-language-index <=> SettingsPageAdapter.target-language-index;
+            source-language-changed => {
+                SettingsPageAdapter.source-language-changed(SettingsPageAdapter.source-language-index);
+            }
+            target-language-changed => {
+                SettingsPageAdapter.target-language-changed(SettingsPageAdapter.target-language-index);
+            }
+        }
+
+        HorizontalBox {
+            spacing: 12px;
+            Button {
+                text: "Back";
+                clicked => {
+                    AppWindowViewModel.navigate-back();
+                }
+            }
+
+            Button {
+                text: "Save";
+                clicked => {
+                    SettingsPageAdapter.save-settings();
+                }
+            }
+        }
+    }
+}

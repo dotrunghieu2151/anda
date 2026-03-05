@@ -1,30 +1,68 @@
-import { Button, VerticalBox } from "std-widgets.slint";
-import { WaveformVisualizer, WaveformVisualizerState } from "./wave-form.slint";
+
+import { VerticalBox, Button } from "std-widgets.slint";
+import { TranscriptionPage } from "./pages/transcription-page.slint";
+import { SettingsPage } from "./pages/settings-page.slint";
+import { HomePage } from "./pages/home-page.slint";
+import { TodoPage } from "./pages/todo-page.slint";
+import { AppWindowViewModel, Pages } from "./app-window-global.slint";
+
 
 export component AppWindow inherits Window {
-    in-out property<int> counter: 42;
-    in property<string> drawCommands;
-    out property <WaveformVisualizerState> waveformState: waveform.waveformState;
+    property <bool> is-full-screen: false;
+    title: @tr("AppWindow.title");
+    full-screen: is-full-screen;
+    preferred-width: 1920px;
+    preferred-height: 1080px;
+    min-width: 900px;
+    min-height: 700px;
 
+    MenuBar {
+        Menu {
+            title: @tr("File");
+            MenuItem {
+                title: @tr("New");
+                activated => { }
+            }
+            MenuItem {
+                title: @tr("Open");
+                activated => {  }
+            }
 
-    callback request-increase-value();
-    VerticalBox {
-        Text {
-            text: "Counter: \{root.counter}";
-        }
-        Button {
-            text: "Increase value";
-            clicked => {
-                root.request-increase-value();
+            MenuSeparator {}
+
+            Menu {
+                title: @tr("Preferences");
+                MenuItem {
+                    title: @tr("Settings");
+                    activated => { AppWindowViewModel.navigate(Pages.settings); }
+                }
+
+                MenuItem {
+                    title: @tr("Full Screen");
+                    checkable: true;
+                    checked: is-full-screen;
+                    activated => { is-full-screen = !is-full-screen; }
+                }
+            }
+            Menu {
+                title: @tr("Help");
+                MenuItem {
+                    title: @tr("About");
+                }
             }
         }
-     }
-
-    waveform := WaveformVisualizer {
-        width: parent.width;
-        height: parent.height * 0.5;
-        y: parent.height * 0.1;
-        drawCommands: drawCommands;
     }
 
+    VerticalBox {
+        spacing: 0;
+        width: 100%;
+        height: 100%;
+
+        // Pages are rendered conditionally based on current-page-component
+        // C++ sets current-page-component to determine which page to show
+        if AppWindowViewModel.current-page == Pages.transcription: TranscriptionPage {}
+        if AppWindowViewModel.current-page == Pages.settings: SettingsPage {}
+        if AppWindowViewModel.current-page == Pages.home: HomePage {}
+        if AppWindowViewModel.current-page == Pages.todos: TodoPage {}
+    }
 }

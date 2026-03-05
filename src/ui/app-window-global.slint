@@ -1,0 +1,13 @@
+export enum Pages {
+    home,
+    settings,
+    transcription,
+    todos
+}
+
+export global AppWindowViewModel {
+    in property <Pages> current-page: Pages.todos;
+    callback navigate(page: Pages);
+    callback navigate-back();
+    callback navigate-forward();
+}

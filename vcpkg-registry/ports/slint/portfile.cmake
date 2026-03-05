@@ -6,8 +6,8 @@ cmake_minimum_required(VERSION 3.31.10)
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO slint-ui/slint
-    REF v1.14.0
-    SHA512 f42d5cb3569e927f96eaacb630252ddbeab279304a520293f0e35d847514b09387ff30d88748b46404e7183b9bc055e0cda3d2883948badf2ee7dab9a4ad9703
+    REF v1.15.1
+    SHA512 c2d890cf3dd9b871dededbc3bd7301e00a34d492421bb0fb15f010a8f76826a4a4030285e48105c164a5095b9893186b76515c1bd860bb5a57fc3af90a7823bd
 )
 
 vcpkg_cmake_configure(

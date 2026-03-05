@@ -1,0 +1,71 @@
+// Reusable device selector component
+// Used for both input and output audio device selection
+
+import { ComboBox, GroupBox } from "std-widgets.slint";
+
+export component DeviceSelector {
+    in property <string> label;
+    in property <[string]> devices: [];
+    in-out property <int> selected-index: 0;
+    
+    callback device-changed(int);
+    
+    preferred-width: 250px;
+    
+    VerticalLayout {
+        spacing: 8px;
+        
+        Text {
+            text: root.label;
+            font-size: 14px;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+        
+        ComboBox {
+            model: root.devices;
+            current-index <=> root.selected-index;
+            
+            selected(value) => {
+                root.device-changed(root.selected-index);
+            }
+        }
+    }
+}
+
+// Section component for device selection
+export component DeviceSelectionSection {
+    in property <[string]> input-devices: [];
+    in property <[string]> output-devices: [];
+    in-out property <int> selected-input-index: 0;
+    in-out property <int> selected-output-index: 0;
+    
+    callback input-device-changed(int);
+    callback output-device-changed(int);
+    
+    GroupBox {
+        title: "Audio Devices";
+        
+        HorizontalLayout {
+            spacing: 20px;
+            
+            DeviceSelector {
+                label: "Input Device";
+                devices: root.input-devices;
+                selected-index <=> root.selected-input-index;
+                device-changed => {
+                    root.input-device-changed(root.selected-input-index);
+                }
+            }
+            
+            DeviceSelector {
+                label: "Output Device";
+                devices: root.output-devices;
+                selected-index <=> root.selected-output-index;
+                device-changed => {
+                    root.output-device-changed(root.selected-output-index);
+                }
+            }
+        }
+    }
+}

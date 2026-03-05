@@ -2,7 +2,7 @@
   "versions": [
     {
       "path": "$/ports/corrosion",
-      "version": "0.5.2",
+      "version": "0.6.0",
       "port-version": 0
     }
   ]

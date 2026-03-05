@@ -1,0 +1,117 @@
+// Control panel component for transcription controls
+// Handles start/pause/continue/stop and save operations
+
+import { Button, GroupBox } from "std-widgets.slint";
+
+export component ControlButton {
+    in property <string> text;
+    in property <color> button-color: #00d9ff;
+    in property <bool> enabled: true;
+    in property <bool> is-primary: false;
+    callback clicked;
+    min-width: 140px;
+    min-height: 44px;
+    Rectangle {
+        border-radius: 8px;
+        background: root.enabled ? (touch-area.has-hover ? root.button-color.darker(0.15) : root.button-color) : #4a4a5e;
+        opacity: root.enabled ? 1.0 : 0.5;
+        border-width: root.is-primary ? 2px : 0px;
+        border-color: root.is-primary ? root.button-color.brighter(0.3) : transparent;
+        animate background {
+            duration: 200ms;
+            easing: ease-out;
+        }
+        touch-area := TouchArea {
+            clicked => {
+                if (root.enabled) {
+                    root.clicked();
+                }
+            }
+        }
+
+        Text {
+            text: root.text;
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+    }
+}
+
+// Control panel section
+export component ControlPanel {
+    in property <bool> is-recording: false;
+    in property <bool> is-paused: false;
+    in property <bool> has-audio-data: false;
+    callback start-clicked;
+    callback pause-clicked;
+    callback continue-clicked;
+    callback stop-clicked;
+    callback save-clicked;
+    callback clear-clicked;
+    GroupBox {
+        title: @tr("ControlPanel.title");
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: center;
+            
+            // Start button (shown when not recording)
+            if !root.is-recording: ControlButton {
+                text: @tr("ControlPanel.start-transcription");
+                button-color: #00d9ff;
+                is-primary: true;
+                clicked => {
+                    root.start-clicked();
+                }
+            }
+            
+            // Pause button (shown when recording and not paused)
+            if root.is-recording && !root.is-paused: ControlButton {
+                text: @tr("ControlPanel.pause");
+                button-color: #ffa500;
+                clicked => {
+                    root.pause-clicked();
+                }
+            }
+            
+            // Continue button (shown when paused)
+            if root.is-recording && root.is-paused: ControlButton {
+                text: @tr("ControlPanel.continue");
+                button-color: #00d9ff;
+                is-primary: true;
+                clicked => {
+                    root.continue-clicked();
+                }
+            }
+            
+            // Stop button (shown when recording)
+            if root.is-recording: ControlButton {
+                text: @tr("ControlPanel.stop");
+                button-color: #ff3366;
+                clicked => {
+                    root.stop-clicked();
+                }
+            }
+            
+            // Save button
+            ControlButton {
+                text: @tr("ControlPanel.save-audio");
+                button-color: #4ecdc4;
+                enabled: root.has-audio-data && !root.is-recording;
+                clicked => {
+                    root.save-clicked();
+                }
+            }
+            
+            // Clear button
+            ControlButton {
+                text: @tr("ControlPanel.clear");
+                button-color: #6c757d;
+                enabled: !root.is-recording;
+                clicked => {
+                    root.clear-clicked();
+                }
+            }
+        }
+    }
+}

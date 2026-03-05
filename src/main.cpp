@@ -241,15 +241,14 @@ int main()
     // });
 
     auto         app = AppWindow::create();
-    std::string  drawCommands;
-    slint::Timer timer;
-    timer.start(slint::TimerMode::Repeated, std::chrono::milliseconds(16), [&]() {
-        samples_to_svg_path(generate_random_audio_levels(), drawCommands,
-                            app->get_waveformState().width, app->get_waveformState().height);
+    // std::string  drawCommands;
+    // slint::Timer timer;
+    // timer.start(slint::TimerMode::Repeated, std::chrono::milliseconds(16), [&]() {
+    //     samples_to_svg_path(generate_random_audio_levels(), drawCommands,
+    //                         app->get_waveformState().width, app->get_waveformState().height);
 
-        app->set_drawCommands(slint::SharedString(drawCommands));
-    });
-    app->on_request_increase_value([&]() { app->set_counter(app->get_counter() + 1); });
+    //     app->set_drawCommands(slint::SharedString(drawCommands));
+    // });
     app->show();
     slint::run_event_loop();
     return 0;

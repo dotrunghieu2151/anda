@@ -1,0 +1,148 @@
+// Task item component - displays tasks with indentation based on hierarchy level
+// Tasks are displayed in a flattened structure with visual indentation
+
+import {
+    VerticalBox,
+    HorizontalBox,
+    CheckBox,
+    Button,
+    LineEdit,
+} from "std-widgets.slint";
+import { Task } from "./todo-types.slint";
+
+export component TaskItem {
+    in property <Task> task-data;
+    callback task-checked-changed();
+    callback sub-task-add-requested();
+    callback task-expanded-changed();
+    private property <bool> show-add-subtask: false;
+    private property <string> new-subtask-title: "";
+    private property <string> new-subtask-description: "";
+    
+    // Calculate indentation offset based on level
+    // Each level adds 24px of indentation
+    private property <length> indent-offset: root.task-data.indentation-level * 24px;
+    VerticalBox {
+        spacing: 4px;
+        HorizontalBox {
+            spacing: 8px;
+            alignment: start;
+            
+            // Indentation spacer
+            Rectangle {
+                width: root.indent-offset;
+                height: 1px;
+                background: transparent;
+            }
+            
+            // Collapse/Expand button (only show if task has children)
+            if root.task-data.has-children: Rectangle {
+                width: 20px;
+                height: 20px;
+                background: touch-area.pressed ? #2a2a3e : transparent;
+                border-radius: 2px;
+                touch-area := TouchArea {
+                    clicked => {
+                        root.task-expanded-changed();
+                    }
+                }
+                
+                // Chevron icon (triangle pointing right when collapsed, down when expanded)
+                Text {
+                    text: root.task-data.expanded ? "▼" : "▶";
+                    font-size: 10px;
+                    color: #6c757d;
+                    x: parent.width / 2 - 5px;
+                    y: parent.height / 2 - 5px;
+                }
+            }
+            
+            // Spacer if no collapse button
+            if !root.task-data.has-children: Rectangle {
+                width: 20px;
+                height: 1px;
+                background: transparent;
+            }
+
+            CheckBox {
+                checked: root.task-data.checked;
+                toggled => {
+                    root.task-checked-changed();
+                }
+            }
+
+            VerticalBox {
+                spacing: 2px;
+                vertical-stretch: 1;
+                Text {
+                    text: root.task-data.title;
+                    font-size: 15px;
+                    font-weight: root.task-data.checked ? 400 : 600;
+                    color: root.task-data.checked ? #6c757d : #e0e0e0;
+                }
+
+                if !root.task-data.description.is-empty: Text {
+                    text: root.task-data.description;
+                    font-size: 13px;
+                    color: #6c757d;
+                    wrap: word-wrap;
+                }
+            }
+        }
+        
+        // Add sub-task button (only show for non-checked tasks)
+        if !root.task-data.checked: HorizontalBox {
+            x: root.indent-offset;
+            spacing: 8px;
+            Button {
+                text: @tr("TaskItem.add-subtask");
+                clicked => {
+                    root.show-add-subtask = !root.show-add-subtask;
+                }
+            }
+        }
+        
+        // Add sub-task form
+        if root.show-add-subtask: Rectangle {
+            x: root.indent-offset;
+            background: #1a1a2e;
+            border-radius: 4px;
+            VerticalBox {
+                spacing: 8px;
+                padding: 8px;
+                LineEdit {
+                    placeholder-text: @tr("TaskItem.subtask-title-placeholder");
+                    text <=> root.new-subtask-title;
+                }
+
+                LineEdit {
+                    placeholder-text: @tr("TaskItem.subtask-description-placeholder");
+                    text <=> root.new-subtask-description;
+                }
+
+                HorizontalBox {
+                    spacing: 8px;
+                    Button {
+                        text: @tr("TaskItem.add");
+                        enabled: !root.new-subtask-title.is-empty;
+                        clicked => {
+                            root.sub-task-add-requested();
+                            root.new-subtask-title = "";
+                            root.new-subtask-description = "";
+                            root.show-add-subtask = false;
+                        }
+                    }
+
+                    Button {
+                        text: @tr("TaskItem.cancel");
+                        clicked => {
+                            root.show-add-subtask = false;
+                            root.new-subtask-title = "";
+                            root.new-subtask-description = "";
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,84 @@
+// Language selection component for source and destination languages
+
+import { ComboBox, GroupBox } from "std-widgets.slint";
+
+export component LanguageSelector {
+    in property <string> label;
+    in property <[string]> languages: [];
+    in-out property <int> selected-index: 0;
+    
+    callback language-changed(int);
+    
+    preferred-width: 200px;
+    
+    VerticalLayout {
+        spacing: 8px;
+        
+        Text {
+            text: root.label;
+            font-size: 14px;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+        
+        ComboBox {
+            model: root.languages;
+            current-index <=> root.selected-index;
+            
+            selected(value) => {
+                root.language-changed(root.selected-index);
+            }
+        }
+    }
+}
+
+// Section component for language selection
+export component LanguageSelectionSection {
+    in property <[string]> languages: [];
+    in-out property <int> source-language-index: 0;
+    in-out property <int> target-language-index: 1;
+    
+    callback source-language-changed(int);
+    callback target-language-changed(int);
+    
+    GroupBox {
+        title: "Languages";
+        
+        HorizontalLayout {
+            spacing: 20px;
+            alignment: center;
+            
+            LanguageSelector {
+                label: "Source Language";
+                languages: root.languages;
+                selected-index <=> root.source-language-index;
+                language-changed => {
+                    root.source-language-changed(root.source-language-index);
+                }
+            }
+            
+            // Arrow indicator
+            Rectangle {
+                width: 40px;
+                height: 40px;
+                
+                Text {
+                    text: "→";
+                    font-size: 28px;
+                    color: #00d9ff;
+                    y: parent.height / 2 - 14px;
+                    horizontal-alignment: center;
+                }
+            }
+            
+            LanguageSelector {
+                label: "Target Language";
+                languages: root.languages;
+                selected-index <=> root.target-language-index;
+                language-changed => {
+                    root.target-language-changed(root.target-language-index);
+                }
+            }
+        }
+    }
+}

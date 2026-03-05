@@ -4,7 +4,7 @@
   "dependencies": [
     { "name": "fmt", "version>=": "12.0.0#0" },
     { "name": "spdlog", "version>=": "1.15.3#0" },
-    { "name": "slint", "version>=": "1.14.0#0" },
+    { "name": "slint", "version>=": "1.15.1#0" },
     { "name": "soxr-config", "version>=": "0.1.3#0" },
     {
       "name": "portaudio",

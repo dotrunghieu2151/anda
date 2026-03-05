@@ -1,0 +1,56 @@
+// Reusable text display component for transcription and translation
+
+import { ScrollView, GroupBox } from "std-widgets.slint";
+
+export component TextDisplay {
+    in property <string> title;
+    in property <string> content: "";
+    in property <color> accent-color: #00d9ff;
+    private property <bool> is-empty: root.content.is-empty;
+    preferred-height: 250px;
+    vertical-stretch: 1;
+    GroupBox {
+        title: root.title;
+        Rectangle {
+            background: root.is-empty ? #1a1a2e : #0f0f1e;
+            border-radius: 4px;
+            Rectangle {
+                x: 12px;
+                y: 12px;
+                width: parent.width - 24px;
+                height: parent.height - 24px;
+                ScrollView {
+                    Text {
+                        width: parent.visible-width;
+                        text: root.is-empty ? @tr("TextDisplay.waiting-for") + " " + root.title + "..." : root.content;
+                        font-size: 15px;
+                        color: root.is-empty ? #6c757d : #e0e0e0;
+                        wrap: word-wrap;
+                        horizontal-alignment: left;
+                        vertical-alignment: top;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Section component for transcription display
+export component TranscriptionSection {
+    in property <string> transcription-text: "";
+    TextDisplay {
+        title: @tr("TranscriptionSection.title");
+        content: root.transcription-text;
+        accent-color: #00d9ff;
+    }
+}
+
+// Section component for translation display
+export component TranslationSection {
+    in property <string> translation-text: "";
+    TextDisplay {
+        title: @tr("TranslationSection.title");
+        content: root.translation-text;
+        accent-color: #9d4edd;
+    }
+}

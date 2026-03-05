@@ -1,0 +1,143 @@
+import { VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { AppHeader } from "../components/header.slint";
+import {
+    DeviceSelectionSection,
+} from "../components/device-selector.slint";
+import { StatusBar } from "../modules/transcription/status-bar.slint";
+import {
+    AudioVisualizationSection,
+} from "../modules/transcription/audio-visualization.slint";
+import {
+    LanguageSelectionSection,
+} from "../components/language-selector.slint";
+import {
+    TranscriptionSection,
+    TranslationSection,
+} from "../modules/transcription/text-display.slint";
+import { ControlPanel } from "../modules/transcription/control-panel.slint";
+
+export global TranscriptionPageViewModel {
+    // audio device management
+    in-out property <[string]> input-devices: [];
+    in-out property <[string]> output-devices: [];
+    in-out property <int> selected-input-device: 0;
+    in-out property <int> selected-output-device: 0;
+    callback input-device-selected(int);
+    callback output-device-selected(int);
+
+    // language management
+    in-out property <[string]> languages: [];
+    in-out property <int> source-language: 0;
+    in-out property <int> target-language: 1;
+    callback source-language-selected(int);
+    callback target-language-selected(int);
+ // Text content
+    in-out property <string> transcription-text: "";
+    in-out property <string> translation-text: "";
+    
+    // Recording state
+    in-out property <bool> is-recording: false;
+    in-out property <bool> is-paused: false;
+    in-out property <float> recording-duration: 0.0; // in seconds
+    
+    // Audio visualization data (0.0 to 1.0 range for waveform)
+    in-out property <string> waveform-path: ""; // SVG path commands for waveform
+    
+    // Callbacks for user actions
+    callback start-transcription();
+    callback pause-transcription();
+    callback continue-transcription();
+    callback stop-transcription();
+    callback save-audio();
+    callback clear-all();
+}
+
+export component TranscriptionPage {
+    VerticalBox {
+        spacing: 16px;
+        padding: 20px;
+        
+        // Header Section
+        AppHeader {
+            title: @tr("TranscriptionPage.title");
+            subtitle: @tr("TranscriptionPage.subtitle");
+        }
+        
+        // Device Selection Section
+        DeviceSelectionSection {
+            input-devices: TranscriptionPageViewModel.input-devices;
+            output-devices: TranscriptionPageViewModel.output-devices;
+            selected-input-index <=> TranscriptionPageViewModel.selected-input-device;
+            selected-output-index <=> TranscriptionPageViewModel.selected-output-device;
+            input-device-changed => {
+                TranscriptionPageViewModel.input-device-selected(TranscriptionPageViewModel.selected-input-device);
+            }
+            output-device-changed => {
+                TranscriptionPageViewModel.output-device-selected(TranscriptionPageViewModel.selected-output-device);
+            }
+        }
+        
+        // Status Bar
+        StatusBar {
+            is-recording: TranscriptionPageViewModel.is-recording;
+            is-paused: TranscriptionPageViewModel.is-paused;
+            duration: TranscriptionPageViewModel.recording-duration;
+        }
+        
+        // Audio Visualization Section
+        AudioVisualizationSection {
+            waveform-path: TranscriptionPageViewModel.waveform-path;
+        }
+        
+        // Language Selection Section
+        LanguageSelectionSection {
+            languages: TranscriptionPageViewModel.languages;
+            source-language-index <=> TranscriptionPageViewModel.source-language;
+            target-language-index <=> TranscriptionPageViewModel.target-language;
+            source-language-changed => {
+                TranscriptionPageViewModel.source-language-selected(TranscriptionPageViewModel.source-language);
+            }
+            target-language-changed => {
+                TranscriptionPageViewModel.target-language-selected(TranscriptionPageViewModel.target-language);
+            }
+        }
+        
+        // Transcription and Translation Display Section
+        HorizontalBox {
+            spacing: 16px;
+            vertical-stretch: 1;
+            TranscriptionSection {
+                transcription-text: TranscriptionPageViewModel.transcription-text;
+            }
+
+            TranslationSection {
+                translation-text: TranscriptionPageViewModel.translation-text;
+            }
+        }
+        
+        // Control Panel Section
+        ControlPanel {
+            is-recording: TranscriptionPageViewModel.is-recording;
+            is-paused: TranscriptionPageViewModel.is-paused;
+            has-audio-data: !TranscriptionPageViewModel.transcription-text.is-empty || !TranscriptionPageViewModel.translation-text.is-empty;
+            start-clicked => {
+                TranscriptionPageViewModel.start-transcription();
+            }
+            pause-clicked => {
+                TranscriptionPageViewModel.pause-transcription();
+            }
+            continue-clicked => {
+                TranscriptionPageViewModel.continue-transcription();
+            }
+            stop-clicked => {
+                TranscriptionPageViewModel.stop-transcription();
+            }
+            save-clicked => {
+                TranscriptionPageViewModel.save-audio();
+            }
+            clear-clicked => {
+                TranscriptionPageViewModel.clear-all();
+            }
+        }
+    }
+}

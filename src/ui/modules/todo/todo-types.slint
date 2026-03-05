@@ -1,0 +1,23 @@
+// Shared structs for Todo and Task
+// Note: Slint doesn't support recursive structs (structs that reference themselves)
+// For nested sub-tasks, we use a flattened structure with parent references and indentation
+// C++ will flatten the hierarchical structure and populate these fields
+
+export struct Task {
+    id: string,
+    title: string,
+    description: string,
+    checked: bool,
+    parent-id: string,  // Empty string for root-level tasks, parent task ID for sub-tasks
+    indentation-level: int,  // 0 for root tasks, 1+ for nested sub-tasks
+    expanded: bool,  // Whether this task's sub-tasks are visible (default: true)
+    has-children: bool,  // Whether this task has sub-tasks (set by C++)
+    visible: bool,  // Whether this task should be displayed (C++ sets based on parent expanded state)
+}
+
+export struct Todo {
+    id: string,
+    title: string,
+    description: string,
+    tasks: [Task],
+}

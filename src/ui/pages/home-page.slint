@@ -1,0 +1,45 @@
+// Example Home Page implementation
+// Demonstrates how to create a page using the navigation system
+
+import { VerticalBox } from "std-widgets.slint";
+import { AppHeader } from "../components/header.slint";
+import { Button } from "std-widgets.slint";
+import { AppWindowViewModel, Pages } from "../app-window-global.slint";
+
+// HomePage-specific route parameters struct
+
+// Home page component
+export component HomePage {
+    VerticalBox {
+        spacing: 16px;
+        padding: 20px;
+        AppHeader {
+            title: @tr("HomePage.title");
+            subtitle: @tr("HomePage.subtitle");
+        }
+
+        VerticalBox {
+            spacing: 12px;
+            Button {
+                text: @tr("HomePage.go-to-transcription");
+                clicked => {
+                    AppWindowViewModel.navigate(Pages.transcription);
+                }
+            }
+
+            Button {
+                text: @tr("HomePage.go-to-todos");
+                clicked => {
+                    AppWindowViewModel.navigate(Pages.todos);
+                }
+            }
+
+            Button {
+                text: @tr("HomePage.go-to-settings");
+                clicked => {
+                    AppWindowViewModel.navigate(Pages.settings);
+                }
+            }
+        }
+    }
+}
