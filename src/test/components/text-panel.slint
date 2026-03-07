@@ -1,0 +1,298 @@
+// ============================================================
+// VoiceScribe AI — Text Stream Panel
+// Used for both Live Transcription and Live Translation.
+// ============================================================
+import { ScrollView } from "std-widgets.slint";
+import { AppTheme } from "../theme.slint";
+// ── Shared data structure ────────────────────────────────────
+export struct TranscriptEntry {
+    id:         string,
+    timestamp:  string,
+    text:       string,
+    is-partial: bool,
+}
+// ── Single transcript row ────────────────────────────────────
+component EntryRow {
+    in property <TranscriptEntry> entry;
+    in property <color>           accent: AppTheme.accent-blue;
+    height: self.preferred-height + 12px;
+    HorizontalLayout {
+        padding-top:    6px;
+        padding-bottom: 6px;
+        spacing:        12px;
+        alignment:      start;
+        // Timestamp
+        Text {
+            text:       entry.timestamp;
+            color:      AppTheme.text-muted;
+            font-size:  AppTheme.font-sm;
+            min-width:  48px;
+            vertical-alignment: top;
+        }
+        // Accent border strip
+        Rectangle {
+            width:         2px;
+            border-radius: AppTheme.radius-full;
+            background:    entry.is-partial
+                ? rgba(255, 255, 255, 0.10)
+                : root.accent.transparentize(0.55);
+        }
+        // Text content
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 0px;
+            Text {
+                text:              entry.text;
+                color:             entry.is-partial
+                    ? AppTheme.text-secondary
+                    : #cbd5e1;
+                font-size:         AppTheme.font-base;
+                wrap:              word-wrap;
+                font-italic:       entry.is-partial;
+                horizontal-stretch: 1;
+            }
+            // Blinking cursor for partial / streaming entries
+            if entry.is-partial: cursor := Rectangle {
+                width:         6px;
+                height:        12px;
+                border-radius: 1px;
+                background:    root.accent;
+                opacity:       1.0;
+                // Blink animation
+                anim-cursor := PropertyAnimation {}
+                Timer {
+                    interval: 500ms;
+                    running:  true;
+                    triggered => {
+                        cursor.opacity = cursor.opacity > 0.5 ? 0.0 : 1.0;
+                    }
+                }
+            }
+        }
+    }
+}
+// ── Inline action button (Copy / Export) ────────────────────
+component ActionButton {
+    in property <string> label: "Copy";
+    in property <string> icon:  "⎘";
+    callback clicked();
+    height: 28px;
+    bg := Rectangle {
+        border-radius: AppTheme.radius-md;
+        background:    AppTheme.btn-surface;
+        border-color:  AppTheme.border-subtle;
+        border-width:  1px;
+        animate background { duration: AppTheme.anim-fast; }
+        HorizontalLayout {
+            padding-left:  8px;
+            padding-right: 8px;
+            spacing:       4px;
+            alignment:     center;
+            Text { text: root.icon;  color: AppTheme.text-secondary; font-size: AppTheme.font-sm; }
+            Text { text: root.label; color: AppTheme.text-secondary; font-size: AppTheme.font-sm; }
+        }
+        TouchArea {
+            mouse-cursor: pointer;
+            entered  => { bg.background = AppTheme.btn-surface-hover; }
+            exited   => { bg.background = AppTheme.btn-surface; }
+            clicked  => { root.clicked(); }
+        }
+    }
+}
+// ── Main text-stream panel ───────────────────────────────────
+export component TextPanel {
+    // ── Configuration ─────────────────────────────────────────
+    in property <string>             title:          "Live Transcription";
+    in property <string>             lang-badge:     "EN";
+    in property <bool>               is-recording:   false;
+    in property <color>              accent:         AppTheme.accent-blue;
+    in property <bool>               alt-style:      false;
+    in property <[TranscriptEntry]>  entries:        [];
+    // ── Callbacks ─────────────────────────────────────────────
+    callback copy-clicked();
+    callback export-clicked();
+    // Derived stats
+    private property <int>  segment-count: entries.length;
+    private property <float> word-count: 0.0; // computed externally
+    Rectangle {
+        border-radius: AppTheme.radius-xl;
+        border-color:  AppTheme.border-subtle;
+        border-width:  1px;
+        clip:          true;
+        background:    root.alt-style
+            ? rgba(22, 28, 45, 0.80)
+            : rgba(16, 22, 36, 0.80);
+        VerticalLayout {
+            // ── Panel header ──────────────────────────────
+            header := Rectangle {
+                height:     46px;
+                background: root.alt-style
+                    ? rgba(139, 92, 246, 0.05)
+                    : rgba(59, 130, 246, 0.05);
+                // Header bottom border
+                Rectangle {
+                    y:          parent.height - 1px;
+                    height:     1px;
+                    background: AppTheme.border-muted;
+                }
+                HorizontalLayout {
+                    padding-left:  14px;
+                    padding-right: 12px;
+                    spacing:        8px;
+                    alignment:      center;
+                    // File icon
+                    Text {
+                        text:      "☰";
+                        color:     root.accent;
+                        font-size: AppTheme.font-base;
+                    }
+                    // Panel title
+                    Text {
+                        text:      root.title;
+                        color:     AppTheme.text-primary;
+                        font-size: AppTheme.font-base;
+                    }
+                    // Language badge
+                    Rectangle {
+                        height:        18px;
+                        border-radius: AppTheme.radius-full;
+                        background:    root.accent.transparentize(0.85);
+                        border-color:  root.accent.transparentize(0.65);
+                        border-width:  1px;
+                        padding-left:  6px;
+                        padding-right: 6px;
+                        Text {
+                            text:      root.lang-badge;
+                            color:     root.accent;
+                            font-size: AppTheme.font-xs;
+                        }
+                    }
+                    // LIVE badge (only when recording)
+                    if root.is-recording: Rectangle {
+                        height:        18px;
+                        border-radius: AppTheme.radius-full;
+                        background:    rgba(72, 187, 120, 0.12);
+                        border-color:  rgba(72, 187, 120, 0.30);
+                        border-width:  1px;
+                        HorizontalLayout {
+                            padding-left:  6px;
+                            padding-right: 6px;
+                            spacing:       4px;
+                            alignment:     center;
+                            live-dot := Rectangle {
+                                width:         6px;
+                                height:        6px;
+                                border-radius: AppTheme.radius-full;
+                                background:    AppTheme.accent-green;
+                            }
+                            Text {
+                                text:      "LIVE";
+                                color:     AppTheme.accent-green;
+                                font-size: AppTheme.font-xs;
+                            }
+                        }
+                        Timer {
+                            interval: 750ms;
+                            running:  root.is-recording;
+                            triggered => {
+                                live-dot.opacity = live-dot.opacity > 0.5 ? 0.2 : 1.0;
+                            }
+                        }
+                    }
+                    // Flexible spacer
+                    Rectangle { horizontal-stretch: 1; }
+                    // Action buttons
+                    ActionButton {
+                        label:   "Copy";
+                        icon:    "⎘";
+                        clicked => { root.copy-clicked(); }
+                    }
+                    ActionButton {
+                        label:   "Export";
+                        icon:    "↓";
+                        clicked => { root.export-clicked(); }
+                    }
+                }
+            }
+            // ── Scrollable content area ───────────────────
+            ScrollView {
+                vertical-stretch:   1;
+                horizontal-stretch: 1;
+                VerticalLayout {
+                    padding:  16px;
+                    spacing:  4px;
+                    alignment: start;
+                    // Empty state
+                    if entries.length == 0: VerticalLayout {
+                        alignment: center;
+                        spacing:   12px;
+                        padding-top: 60px;
+                        Rectangle {
+                            width:         48px;
+                            height:        48px;
+                            border-radius: AppTheme.radius-full;
+                            background:    rgba(255, 255, 255, 0.03);
+                            border-color:  AppTheme.border-subtle;
+                            border-width:  1px;
+                            horizontal-alignment: center;
+                            Text {
+                                text:                 "☰";
+                                color:                #334155;
+                                font-size:            20px;
+                                horizontal-alignment: center;
+                                vertical-alignment:   center;
+                            }
+                        }
+                        Text {
+                            text:                 root.is-recording
+                                ? "Listening…"
+                                : "No transcript yet";
+                            color:                AppTheme.text-muted;
+                            font-size:            AppTheme.font-base;
+                            horizontal-alignment: center;
+                        }
+                        Text {
+                            text:                 root.is-recording
+                                ? "Transcription will appear here"
+                                : "Press Start Recording to begin";
+                            color:                AppTheme.text-dim;
+                            font-size:            AppTheme.font-sm;
+                            horizontal-alignment: center;
+                        }
+                    }
+                    // Entry rows
+                    for entry in root.entries: EntryRow {
+                        entry:  entry;
+                        accent: root.accent;
+                    }
+                }
+            }
+            // ── Footer stats ──────────────────────────────
+            if entries.length > 0: footer := Rectangle {
+                height:     32px;
+                background: transparent;
+                Rectangle {
+                    y:          0px;
+                    height:     1px;
+                    background: AppTheme.border-muted;
+                }
+                HorizontalLayout {
+                    padding-left:  14px;
+                    padding-right: 14px;
+                    alignment:     center;
+                    Text {
+                        text:      segment-count + " segment" + (segment-count != 1 ? "s" : "");
+                        color:     AppTheme.text-dim;
+                        font-size: AppTheme.font-sm;
+                    }
+                    Rectangle { horizontal-stretch: 1; }
+                    Text {
+                        text:      "Auto-scroll ↓";
+                        color:     AppTheme.text-dim;
+                        font-size: AppTheme.font-sm;
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,390 @@
+// ============================================================
+// VoiceScribe AI — Settings Panel (Slide-in overlay)
+// ============================================================
+import { ComboBox, ScrollView } from "std-widgets.slint";
+import { AppTheme } from "../theme.slint";
+// ── Toggle switch ────────────────────────────────────────────
+component Toggle {
+    in-out property <bool> checked: false;
+    callback toggled(bool);
+    width:  36px;
+    height: 20px;
+    track := Rectangle {
+        border-radius: AppTheme.radius-full;
+        background:    checked ? AppTheme.btn-primary : rgba(255, 255, 255, 0.10);
+        border-color:  AppTheme.border-strong;
+        border-width:  1px;
+        animate background { duration: AppTheme.anim-normal; }
+        thumb := Rectangle {
+            width:         14px;
+            height:        14px;
+            border-radius: AppTheme.radius-full;
+            background:    white;
+            x:             checked ? parent.width - self.width - 3px : 3px;
+            y:             (parent.height - self.height) / 2;
+            drop-shadow-blur:    3px;
+            drop-shadow-color:   rgba(0, 0, 0, 0.40);
+            drop-shadow-offset-y: 1px;
+            animate x { duration: AppTheme.anim-normal; easing: ease-in-out; }
+        }
+        TouchArea {
+            mouse-cursor: pointer;
+            clicked => {
+                root.checked = !root.checked;
+                root.toggled(root.checked);
+            }
+        }
+    }
+}
+// ── Settings row (label + control) ──────────────────────────
+component SettingRow {
+    in property <string> label:        "";
+    in property <string> description:  "";
+    in property <bool>   last:         false;
+    @children
+    min-height: 48px;
+    content := Rectangle {
+        border-color:  last ? transparent : AppTheme.border-muted;
+        border-width:  0px;
+        // Only bottom border
+        if !root.last: Rectangle {
+            y:          parent.height - 1px;
+            height:     1px;
+            background: AppTheme.border-muted;
+        }
+        HorizontalLayout {
+            padding-left:   16px;
+            padding-right:  16px;
+            padding-top:     8px;
+            padding-bottom:  8px;
+            spacing:        12px;
+            alignment:       center;
+            VerticalLayout {
+                horizontal-stretch: 1;
+                spacing: 2px;
+                Text {
+                    text:      root.label;
+                    color:     #cbd5e1;
+                    font-size: AppTheme.font-base;
+                }
+                if root.description != "": Text {
+                    text:      root.description;
+                    color:     AppTheme.text-muted;
+                    font-size: AppTheme.font-sm;
+                }
+            }
+            // Slot for the control widget
+            @children
+        }
+    }
+}
+// ── Settings section with heading ───────────────────────────
+component SettingSection {
+    in property <string> title: "";
+    in property <string> icon:  "⚙";
+    @children
+    VerticalLayout {
+        spacing: 8px;
+        // Section heading
+        HorizontalLayout {
+            spacing: 6px;
+            alignment: start;
+            Text {
+                text:      root.icon;
+                color:     AppTheme.accent-blue;
+                font-size: AppTheme.font-base;
+            }
+            Text {
+                text:      root.title;
+                color:     AppTheme.text-secondary;
+                font-size: AppTheme.font-xs;
+            }
+        }
+        // Card container
+        Rectangle {
+            border-radius: AppTheme.radius-lg;
+            border-color:  AppTheme.border-subtle;
+            border-width:  1px;
+            background:    rgba(255, 255, 255, 0.025);
+            clip:          true;
+            VerticalLayout {
+                @children
+            }
+        }
+    }
+}
+// ── Styled combobox wrapper ──────────────────────────────────
+component SettingsSelect {
+    in property <[string]> model:         [];
+    in property <int>      current-index: 0;
+    callback selected(int);
+    min-width: 145px;
+    height:    30px;
+    Rectangle {
+        border-radius: AppTheme.radius-md;
+        background:    rgba(255, 255, 255, 0.07);
+        border-color:  AppTheme.border-strong;
+        border-width:  1px;
+        ComboBox {
+            model:         root.model;
+            current-index: root.current-index;
+            x:             6px;
+            y:             3px;
+            width:         parent.width - 12px;
+            height:        parent.height - 6px;
+            selected(i) => { root.selected(i); }
+        }
+    }
+}
+// ── Main settings panel ──────────────────────────────────────
+export component SettingsPanel {
+    callback close();
+    // Panel open/close animation
+    in property <bool> open: false;
+    private property <length> panel-x: self.width;
+    animate panel-x { duration: AppTheme.anim-slow; easing: ease-in-out; }
+    panel-x: open ? self.width - 420px : self.width;
+    // ── Settings state ────────────────────────────────────
+    private property <int>  model-idx:        4;   // whisper-large-v3
+    private property <int>  quality-idx:      1;   // High
+    private property <int>  buffer-idx:       1;   // 500ms
+    private property <bool> auto-scroll:      true;
+    private property <bool> timestamps:       true;
+    private property <bool> punctuation:      true;
+    private property <bool> speaker-diarize:  false;
+    private property <int>  font-size-idx:    1;   // Medium
+    private property <bool> confidence-hl:    true;
+    private property <bool> gpu-accel:        true;
+    private property <bool> noise-suppress:   true;
+    private property <int>  threads-idx:      2;   // 4 threads
+    // Backdrop
+    backdrop := Rectangle {
+        background: rgba(0, 0, 0, 0.60);
+        opacity:    open ? 1.0 : 0.0;
+        animate opacity { duration: AppTheme.anim-slow; }
+        TouchArea {
+            enabled: open;
+            clicked => { root.close(); }
+        }
+    }
+    // Slide-in panel
+    panel := Rectangle {
+        x:          root.panel-x;
+        width:      420px;
+        height:     root.height;
+        background: #0f1623;
+        border-color: AppTheme.border-subtle;
+        border-width: 0px;
+        clip: true;
+        // Left border shadow strip
+        Rectangle {
+            x:          0px;
+            width:      1px;
+            background: AppTheme.border-subtle;
+        }
+        VerticalLayout {
+            // ── Panel header ──────────────────────────────
+            Rectangle {
+                height:     60px;
+                background: transparent;
+                Rectangle {
+                    y:          parent.height - 1px;
+                    height:     1px;
+                    background: AppTheme.border-subtle;
+                }
+                HorizontalLayout {
+                    padding-left:  20px;
+                    padding-right: 16px;
+                    spacing:       12px;
+                    alignment:     center;
+                    VerticalLayout {
+                        horizontal-stretch: 1;
+                        spacing: 2px;
+                        Text {
+                            text:      "Settings";
+                            color:     AppTheme.text-primary;
+                            font-size: AppTheme.font-md;
+                        }
+                        Text {
+                            text:      "Configure transcription & AI model";
+                            color:     AppTheme.text-muted;
+                            font-size: AppTheme.font-sm;
+                        }
+                    }
+                    // Close button
+                    close-btn := Rectangle {
+                        width:         32px;
+                        height:        32px;
+                        border-radius: AppTheme.radius-md;
+                        background:    AppTheme.btn-surface;
+                        border-color:  AppTheme.border-subtle;
+                        border-width:  1px;
+                        animate background { duration: AppTheme.anim-fast; }
+                        Text {
+                            text:                 "✕";
+                            color:                AppTheme.text-secondary;
+                            font-size:            AppTheme.font-base;
+                            horizontal-alignment: center;
+                            vertical-alignment:   center;
+                        }
+                        TouchArea {
+                            mouse-cursor: pointer;
+                            entered  => { close-btn.background = AppTheme.btn-surface-hover; }
+                            exited   => { close-btn.background = AppTheme.btn-surface; }
+                            clicked  => { root.close(); }
+                        }
+                    }
+                }
+            }
+            // ── Scrollable settings body ──────────────────
+            ScrollView {
+                vertical-stretch: 1;
+                VerticalLayout {
+                    padding:  20px;
+                    spacing:  20px;
+                    alignment: start;
+                    // ── AI Model section ──────────────────
+                    SettingSection { title: "AI MODEL"; icon: "⬡";
+                        SettingRow {
+                            label:       "Model";
+                            description: "Larger models are more accurate but slower";
+                            SettingsSelect {
+                                model: ["whisper-tiny", "whisper-base", "whisper-small",
+                                        "whisper-medium", "whisper-large-v3"];
+                                current-index: model-idx;
+                                selected(i) => { model-idx = i; }
+                            }
+                        }
+                        SettingRow {
+                            label:       "Buffer Delay";
+                            description: "Lower delay = faster but less accurate";
+                            SettingsSelect {
+                                model: ["250ms", "500ms", "1000ms", "2000ms"];
+                                current-index: buffer-idx;
+                                selected(i) => { buffer-idx = i; }
+                            }
+                        }
+                        SettingRow {
+                            label:       "Speaker Diarization";
+                            description: "Identify different speakers";
+                            last: true;
+                            Toggle { checked: speaker-diarize; toggled(v) => { speaker-diarize = v; } }
+                        }
+                    }
+                    // ── Audio section ─────────────────────
+                    SettingSection { title: "AUDIO"; icon: "♬";
+                        SettingRow {
+                            label:       "Sample Quality";
+                            description: "Higher quality uses more bandwidth";
+                            SettingsSelect {
+                                model: ["Standard (16kHz)", "High (48kHz)", "Ultra (96kHz)"];
+                                current-index: quality-idx;
+                                selected(i) => { quality-idx = i; }
+                            }
+                        }
+                        SettingRow {
+                            label: "Noise Suppression";
+                            last: true;
+                            Toggle { checked: noise-suppress; toggled(v) => { noise-suppress = v; } }
+                        }
+                    }
+                    // ── Transcription section ─────────────
+                    SettingSection { title: "TRANSCRIPTION"; icon: "✎";
+                        SettingRow {
+                            label:       "Auto-punctuation";
+                            description: "Add punctuation automatically";
+                            Toggle { checked: punctuation; toggled(v) => { punctuation = v; } }
+                        }
+                        SettingRow {
+                            label:       "Timestamps";
+                            description: "Show timestamps for each segment";
+                            Toggle { checked: timestamps; toggled(v) => { timestamps = v; } }
+                        }
+                        SettingRow {
+                            label:       "Confidence Highlights";
+                            description: "Highlight low-confidence words";
+                            last: true;
+                            Toggle { checked: confidence-hl; toggled(v) => { confidence-hl = v; } }
+                        }
+                    }
+                    // ── Display section ───────────────────
+                    SettingSection { title: "DISPLAY"; icon: "▣";
+                        SettingRow {
+                            label: "Font Size";
+                            SettingsSelect {
+                                model: ["Small", "Medium", "Large"];
+                                current-index: font-size-idx;
+                                selected(i) => { font-size-idx = i; }
+                            }
+                        }
+                        SettingRow {
+                            label:       "Auto-scroll";
+                            description: "Scroll to latest text automatically";
+                            last: true;
+                            Toggle { checked: auto-scroll; toggled(v) => { auto-scroll = v; } }
+                        }
+                    }
+                    // ── Performance section ───────────────
+                    SettingSection { title: "PERFORMANCE"; icon: "⚡";
+                        SettingRow {
+                            label:       "GPU Acceleration";
+                            description: "Use GPU for faster processing";
+                            Toggle { checked: gpu-accel; toggled(v) => { gpu-accel = v; } }
+                        }
+                        SettingRow {
+                            label: "Max Threads";
+                            last: true;
+                            SettingsSelect {
+                                model: ["1 thread", "2 threads", "4 threads", "8 threads", "Auto"];
+                                current-index: threads-idx;
+                                selected(i) => { threads-idx = i; }
+                            }
+                        }
+                    }
+                }
+            }
+            // ── Panel footer ──────────────────────────────
+            Rectangle {
+                height:     56px;
+                background: transparent;
+                Rectangle {
+                    y:          0px;
+                    height:     1px;
+                    background: AppTheme.border-subtle;
+                }
+                HorizontalLayout {
+                    padding-left:  20px;
+                    padding-right: 20px;
+                    alignment:     center;
+                    Text {
+                        text:              "VoiceScribe AI  v2.4.1";
+                        color:             AppTheme.text-dim;
+                        font-size:         AppTheme.font-sm;
+                        horizontal-stretch: 1;
+                    }
+                    // Save & Close button
+                    save-btn := Rectangle {
+                        width:         110px;
+                        height:        34px;
+                        border-radius: AppTheme.radius-md;
+                        background:    @linear-gradient(135deg, #2563eb, #3b82f6);
+                        animate background { duration: AppTheme.anim-fast; }
+                        Text {
+                            text:                 "Save & Close";
+                            color:                white;
+                            font-size:            AppTheme.font-base;
+                            horizontal-alignment: center;
+                            vertical-alignment:   center;
+                        }
+                        TouchArea {
+                            mouse-cursor: pointer;
+                            entered  => { save-btn.background = @linear-gradient(135deg, #1d4ed8, #2563eb); }
+                            exited   => { save-btn.background = @linear-gradient(135deg, #2563eb, #3b82f6); }
+                            clicked  => { root.close(); }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,184 @@
+// ============================================================
+// VoiceScribe AI — Status Bar (Footer)
+// ============================================================
+import { AppTheme } from "../theme.slint";
+// ── Model status enum ────────────────────────────────────────
+export enum ModelStatus { Idle, Processing, Connected }
+// ── Animated audio level meter ───────────────────────────────
+component AudioLevelMeter {
+    in property <bool>  active:     false;
+    in property <int>   bar-count:  20;
+    private property <float> level:      0.02;
+    private property <float> target:     0.02;
+    Timer {
+        interval: 60ms;
+        running:  true;
+        triggered => {
+            root.target = root.active
+                ? 0.18 + Math.abs(Math.sin(root.level * 12.0)) * 0.82
+                : 0.02;
+            root.level += (root.target - root.level) * 0.14;
+        }
+    }
+    width:  110px;
+    height: 12px;
+    HorizontalLayout {
+        spacing: 2px;
+        alignment: start;
+        for i in 20: Rectangle {
+            width:         (parent.width - 38px) / 20;
+            height:        parent.height;
+            border-radius: 1px;
+            // Bar fills up to the current level
+            property <float> threshold: i / 20.0;
+            property <bool>  filled:    threshold < root.level;
+            property <bool>  is-high:   threshold > 0.75;
+            property <bool>  is-mid:    threshold > 0.50;
+            background: filled
+                ? (is-high
+                    ? (active ? AppTheme.accent-red    : #64748b)
+                    : (is-mid
+                        ? (active ? AppTheme.accent-orange : #64748b)
+                        : (active ? AppTheme.accent-green  : #64748b)))
+                : rgba(255, 255, 255, 0.06);
+            animate background { duration: 60ms; }
+        }
+    }
+}
+// ── Status indicator dot + label ────────────────────────────
+component StatusIndicator {
+    in property <color>  dot-color: AppTheme.text-muted;
+    in property <string> label:     "Idle";
+    in property <bool>   pulse:     false;
+    HorizontalLayout {
+        spacing:   5px;
+        alignment: center;
+        dot := Rectangle {
+            width:         6px;
+            height:        6px;
+            border-radius: AppTheme.radius-full;
+            background:    root.dot-color;
+            opacity:       1.0;
+            Timer {
+                interval: 700ms;
+                running:  root.pulse;
+                triggered => {
+                    dot.opacity = dot.opacity > 0.5 ? 0.2 : 1.0;
+                }
+            }
+        }
+        Text {
+            text:      root.label;
+            color:     root.dot-color;
+            font-size: AppTheme.font-sm;
+        }
+    }
+}
+// ── Vertical divider helper ──────────────────────────────────
+component VDivider {
+    width:  1px;
+    Rectangle {
+        height:     20px;
+        background: AppTheme.border-muted;
+    }
+}
+// ── Main status bar ──────────────────────────────────────────
+export component StatusBar {
+    in property <bool>        is-recording:   false;
+    in property <ModelStatus> model-status:   ModelStatus.Idle;
+    in property <int>         session-secs:   0;
+    height: 40px;
+    Rectangle {
+        background: rgba(8, 12, 20, 0.93);
+        clip: true;
+        // Top separator
+        Rectangle {
+            y:          0px;
+            height:     1px;
+            background: AppTheme.border-subtle;
+        }
+        HorizontalLayout {
+            padding-left:  16px;
+            padding-right: 16px;
+            spacing:       12px;
+            alignment:     center;
+            // ── INPUT label ──────────────────────────────
+            Text {
+                text:      "INPUT";
+                color:     AppTheme.text-dim;
+                font-size: AppTheme.font-xs;
+            }
+            // ── Level meter ──────────────────────────────
+            AudioLevelMeter {
+                active: root.is-recording;
+            }
+            VDivider {}
+            // ── Model status ─────────────────────────────
+            Text {
+                text:      "⬡";
+                color:     #475569;
+                font-size: AppTheme.font-sm;
+            }
+            StatusIndicator {
+                dot-color: model-status == ModelStatus.Processing
+                    ? AppTheme.accent-blue
+                    : model-status == ModelStatus.Connected
+                        ? AppTheme.accent-green
+                        : AppTheme.text-muted;
+                label: model-status == ModelStatus.Processing
+                    ? "AI Processing…"
+                    : model-status == ModelStatus.Connected
+                        ? "Connected"
+                        : "Idle";
+                pulse: model-status == ModelStatus.Processing;
+            }
+            VDivider {}
+            // ── Connection / stream state ────────────────
+            Text {
+                text:      "⇆";
+                color:     is-recording ? AppTheme.accent-green : AppTheme.text-muted;
+                font-size: AppTheme.font-base;
+                animate color { duration: AppTheme.anim-slow; }
+            }
+            Text {
+                text:      is-recording ? "Streaming" : "Ready";
+                color:     is-recording ? AppTheme.accent-green : AppTheme.text-muted;
+                font-size: AppTheme.font-sm;
+                animate color { duration: AppTheme.anim-slow; }
+            }
+            // ── Flexible spacer ──────────────────────────
+            Rectangle { horizontal-stretch: 1; }
+            // ── Session timer ─────────────────────────────
+            if root.session-secs > 0 || root.is-recording: HorizontalLayout {
+                spacing: 5px;
+                alignment: center;
+                Text { text: "◷"; color: AppTheme.text-muted; font-size: AppTheme.font-sm; }
+                Text {
+                    text:      (session-secs / 60 < 10 ? "0" : "")
+                               + (session-secs / 60)
+                               + ":"
+                               + (session-secs % 60 < 10 ? "0" : "")
+                               + (session-secs % 60);
+                    color:     is-recording ? AppTheme.text-secondary : AppTheme.text-muted;
+                    font-size: AppTheme.font-sm;
+                }
+            }
+            // ── Model name badge ─────────────────────────
+            Rectangle {
+                height:        22px;
+                border-radius: AppTheme.radius-sm;
+                background:    rgba(255, 255, 255, 0.04);
+                border-color:  AppTheme.border-muted;
+                border-width:  1px;
+                padding-left:  6px;
+                padding-right: 6px;
+                Text {
+                    text:      "whisper-large-v3";
+                    color:     AppTheme.text-dim;
+                    font-size: AppTheme.font-xs;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+}

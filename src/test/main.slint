@@ -1,0 +1,183 @@
+// ============================================================
+// VoiceScribe AI — Main Application Window
+// Target: 1280 × 800 desktop (Windows / macOS / Linux)
+// ============================================================
+import { AppTheme }        from "theme.slint";
+import { Toolbar }         from "components/toolbar.slint";
+import { AudioVisualizer } from "components/audio-visualizer.slint";
+import { TextPanel, TranscriptEntry } from "components/text-panel.slint";
+import { StatusBar, ModelStatus }     from "components/status-bar.slint";
+import { SettingsPanel }   from "components/settings-panel.slint";
+// ── Language data ────────────────────────────────────────────
+global Languages {
+    out property <[string]> labels: [
+        "English", "Spanish", "French", "German",
+        "Chinese", "Japanese", "Korean", "Portuguese",
+        "Russian", "Arabic",  "Italian", "Hindi",
+    ];
+    out property <[string]> codes: [
+        "EN", "ES", "FR", "DE",
+        "ZH", "JA", "KO", "PT",
+        "RU", "AR", "IT", "HI",
+    ];
+}
+// ── Microphone input data ────────────────────────────────────
+global MicInputs {
+    out property <[string]> labels: [
+        "Default Microphone",
+        "Built-in Microphone",
+        "USB Audio Device",
+        "Bluetooth Headset",
+    ];
+}
+// ── Application root window ──────────────────────────────────
+export component AppWindow inherits Window {
+    title:      "VoiceScribe AI";
+    width:      1280px;
+    height:      800px;
+    background: AppTheme.bg-primary;
+    no-frame:   false;
+    // ── App state ─────────────────────────────────────────────
+    private property <bool>        is-recording:      false;
+    private property <bool>        settings-open:     false;
+    private property <int>         source-lang-idx:   0;   // English
+    private property <int>         target-lang-idx:   1;   // Spanish
+    private property <int>         mic-idx:           0;
+    private property <ModelStatus> model-status:      ModelStatus.Idle;
+    private property <int>         session-secs:      0;
+    // ── Mock transcript data (populated when recording) ───────
+    // In a real app these would be populated via Rust/C++ backend
+    // callbacks from the Whisper model integration.
+    private property <[TranscriptEntry]> transcript-entries: [];
+    private property <[TranscriptEntry]> translation-entries: [];
+    // Session timer — increments every second while recording
+    Timer {
+        interval: 1s;
+        running:  root.is-recording;
+        triggered => {
+            root.session-secs += 1;
+        }
+    }
+    // ── Helper: toggle recording ──────────────────────────────
+    function start-recording() {
+        root.is-recording    = true;
+        root.model-status    = ModelStatus.Processing;
+        root.session-secs    = 0;
+        root.transcript-entries  = [];
+        root.translation-entries = [];
+    }
+    function stop-recording() {
+        root.is-recording = false;
+        root.model-status = ModelStatus.Idle;
+    }
+    // ── Public callbacks (wired to Rust / native backend) ─────
+    // Call these from the backend to push new transcript lines:
+    public callback push-transcript(TranscriptEntry);
+    public callback push-translation(TranscriptEntry);
+    public callback set-model-status(ModelStatus);
+    push-transcript(entry)   => { root.transcript-entries  += [entry]; }
+    push-translation(entry)  => { root.translation-entries += [entry]; }
+    set-model-status(status) => { root.model-status = status; }
+    // ── Root layout ───────────────────────────────────────────
+    VerticalLayout {
+        // ── 1. Toolbar ────────────────────────────────────────
+        Toolbar {
+            is-recording:      root.is-recording;
+            source-lang-model: Languages.labels;
+            target-lang-model: Languages.labels;
+            source-lang-index: root.source-lang-idx;
+            target-lang-index: root.target-lang-idx;
+            mic-model:         MicInputs.labels;
+            mic-index:         root.mic-idx;
+            toggle-recording     => {
+                if root.is-recording { root.stop-recording(); }
+                else                 { root.start-recording(); }
+            }
+            source-lang-changed(i) => { root.source-lang-idx = i; }
+            target-lang-changed(i) => { root.target-lang-idx = i; }
+            mic-changed(i)         => { root.mic-idx = i; }
+            open-settings          => { root.settings-open = true; }
+        }
+        // ── 2. Audio Visualizer ───────────────────────────────
+        AudioVisualizer {
+            is-recording: root.is-recording;
+        }
+        // ── 3. Main content — two panels side by side ─────────
+        HorizontalLayout {
+            padding:  12px;
+            spacing:  10px;
+            vertical-stretch: 1;
+            // Left — Live Transcription
+            TextPanel {
+                horizontal-stretch: 1;
+                title:        "Live Transcription";
+                lang-badge:   Languages.codes[root.source-lang-idx];
+                accent:       AppTheme.accent-blue;
+                is-recording: root.is-recording;
+                alt-style:    false;
+                entries:      root.transcript-entries;
+                copy-clicked   => { /* Copy to clipboard via backend */ }
+                export-clicked => { /* Trigger file save dialog */      }
+            }
+            // Center divider with arrow glyph
+            VerticalLayout {
+                width:     24px;
+                alignment: center;
+                spacing:    8px;
+                Rectangle {
+                    vertical-stretch: 1;
+                    width:    1px;
+                    background: AppTheme.border-muted;
+                }
+                Rectangle {
+                    width:         24px;
+                    height:        24px;
+                    border-radius: AppTheme.radius-full;
+                    background:    rgba(255, 255, 255, 0.04);
+                    border-color:  AppTheme.border-subtle;
+                    border-width:  1px;
+                    Text {
+                        text:                 "→";
+                        color:                AppTheme.text-muted;
+                        font-size:            10px;
+                        horizontal-alignment: center;
+                        vertical-alignment:   center;
+                    }
+                }
+                Rectangle {
+                    vertical-stretch: 1;
+                    width:    1px;
+                    background: AppTheme.border-muted;
+                }
+            }
+            // Right — Live Translation
+            TextPanel {
+                horizontal-stretch: 1;
+                title:        "Live Translation";
+                lang-badge:   Languages.codes[root.target-lang-idx];
+                accent:       AppTheme.accent-purple;
+                is-recording: root.is-recording;
+                alt-style:    true;
+                entries:      root.translation-entries;
+                copy-clicked   => { /* Copy translation to clipboard */ }
+                export-clicked => { /* Export translation to file */    }
+            }
+        }
+        // ── 4. Status bar ─────────────────────────────────────
+        StatusBar {
+            is-recording:  root.is-recording;
+            model-status:  root.model-status;
+            session-secs:  root.session-secs;
+        }
+    }
+    // ── 5. Settings panel (overlay) ───────────────────────────
+    // Rendered last so it sits above all other content.
+    SettingsPanel {
+        x:      0;
+        y:      0;
+        width:  root.width;
+        height: root.height;
+        open:   root.settings-open;
+        close  => { root.settings-open = false; }
+    }
+}

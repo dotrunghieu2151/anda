@@ -1,0 +1,114 @@
+// ============================================================
+// VoiceScribe AI — Audio Visualizer Component
+// Renders 48 animated bars driven by a sine-wave Timer.
+// ============================================================
+import { AppTheme } from "../theme.slint";
+// ── Single animated bar ──────────────────────────────────────
+component AudioBar {
+    in property <float> phase:  0.0;   // global animation phase
+    in property <int>   index:  0;     // bar position (0-47)
+    in property <bool>  active: false;
+    // Height ratio derived from sine wave + bar position spread
+    property <float> h-ratio: active
+        ? Math.abs(Math.sin(phase + index * 0.32))
+            * (0.6 + Math.abs(Math.cos(phase * 0.5 + index * 0.15)) * 0.35)
+            + 0.08
+        : 0.05 + Math.abs(Math.sin(index * 1.2)) * 0.03;
+    animate h-ratio { duration: 80ms; easing: ease-in-out; }
+    width: 7px;
+    // Center the bar vertically
+    bar := Rectangle {
+        width:         parent.width;
+        height:        parent.height * root.h-ratio;
+        y:             (parent.height - self.height) / 2;
+        border-radius: 2px;
+        background:    active
+            ? @linear-gradient(180deg, #93c5fd, #3b82f6, rgba(99, 179, 237, 0.5))
+            : @linear-gradient(180deg, #475569, #334155);
+        opacity: active ? 0.88 : 0.28;
+        animate height   { duration: 80ms;  easing: ease-in-out; }
+        animate y        { duration: 80ms;  easing: ease-in-out; }
+        animate opacity  { duration: 200ms; }
+        animate background { duration: 400ms; }
+    }
+    // Glow layer (only visible for tall bars when active)
+    if active && root.h-ratio > 0.55: Rectangle {
+        width:         bar.width;
+        height:        bar.height;
+        y:             bar.y;
+        border-radius: 2px;
+        background:    rgba(99, 179, 237, 0.20);
+        blur: 6px;
+    }
+}
+// ── Audio visualizer panel ───────────────────────────────────
+export component AudioVisualizer {
+    in property <bool> is-recording: false;
+    // Animation phase — incremented by timer
+    private property <float> phase: 0.0;
+    // 50 ms tick → smooth ~20 fps animation
+    Timer {
+        interval: 50ms;
+        running:  root.is-recording;
+        triggered => {
+            root.phase += 0.10;
+        }
+    }
+    height: 80px;
+    // Background
+    bg := Rectangle {
+        background: rgba(12, 16, 26, 0.82);
+        clip: true;
+        // Subtle recording glow overlay
+        glow-overlay := Rectangle {
+            background: radial-gradient(circle at 50% 50%,
+                rgba(59, 130, 246, 0.07),
+                transparent 70%);
+            opacity: root.is-recording ? 1.0 : 0.0;
+            animate opacity { duration: 600ms; }
+        }
+        // Bottom separator
+        Rectangle {
+            y:          parent.height - 1px;
+            height:     1px;
+            background: AppTheme.border-muted;
+        }
+        // ── Status label (top-left) ─────────────────────────
+        HorizontalLayout {
+            x:       12px;
+            y:        6px;
+            spacing:  5px;
+            alignment: center;
+            // Live indicator dot
+            dot := Rectangle {
+                width:         6px;
+                height:        6px;
+                border-radius: AppTheme.radius-full;
+                background:    root.is-recording
+                    ? AppTheme.accent-green
+                    : #64748b;
+                animate background { duration: AppTheme.anim-slow; }
+            }
+            Text {
+                text:      root.is-recording ? "LIVE AUDIO" : "AUDIO INPUT";
+                color:     rgba(148, 163, 184, 0.70);
+                font-size: AppTheme.font-xs;
+            }
+        }
+        // ── Bar container ───────────────────────────────────
+        HorizontalLayout {
+            x:          12px;
+            y:           0px;
+            width:       parent.width - 24px;
+            height:      parent.height;
+            spacing:     3px;
+            alignment:   center;
+            // 48 bars using a for-loop repeater
+            for i in 48: AudioBar {
+                phase:  root.phase;
+                index:  i;
+                active: root.is-recording;
+            }
+        }
+    }
+}
