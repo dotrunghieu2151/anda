@@ -6,12 +6,12 @@ import { AppTheme } from "../theme.slint";
 // ── Styled language / mic selector dropdown ─────────────────
 component SelectDropdown {
     in property <[string]> model:         [];
-    in property <int>      current-index: 0;
+    in-out property <int>  current-index: 0;
     in property <string>   icon:          "";
-    in property <length>   min-width:     150px;
+    in property <length>   dropdown-min-width:     150px;
     callback selected(int);
     height: 34px;
-    min-width: root.min-width;
+    min-width: root.dropdown-min-width;
     Rectangle {
         border-radius:  AppTheme.radius-md;
         background:     AppTheme.btn-surface;
@@ -28,23 +28,23 @@ component SelectDropdown {
                 color:      AppTheme.text-secondary;
                 font-size:  AppTheme.font-base;
             }
-            ComboBox {
+            combo := ComboBox {
                 model:          root.model;
-                current-index:  root.current-index;
+                current-index <=> root.current-index;
                 horizontal-stretch: 1;
-                selected(idx) => { root.selected(idx); }
+                selected(value) => {
+                    root.selected(root.current-index);
+                }
             }
+        }
+        ta := TouchArea {
+            mouse-cursor: pointer;
         }
         // Hover overlay
         hover-rect := Rectangle {
             border-radius: parent.border-radius;
-            background:    transparent;
+            background:    ta.has-hover ? AppTheme.btn-surface-hover : transparent;
             animate background { duration: AppTheme.anim-fast; }
-        }
-        ta := TouchArea {
-            mouse-cursor: pointer;
-            entered => { hover-rect.background = AppTheme.btn-surface-hover; }
-            exited  => { hover-rect.background = transparent; }
         }
     }
 }
@@ -112,7 +112,7 @@ component IconButton {
     height: 36px;
     bg := Rectangle {
         border-radius: AppTheme.radius-md;
-        background:    AppTheme.btn-surface;
+        background:    ta.has-hover ? AppTheme.btn-surface-hover : AppTheme.btn-surface;
         border-color:  AppTheme.border-subtle;
         border-width:  1px;
         animate background { duration: AppTheme.anim-fast; }
@@ -123,10 +123,8 @@ component IconButton {
             horizontal-alignment: center;
             vertical-alignment:   center;
         }
-        TouchArea {
+        ta := TouchArea {
             mouse-cursor: pointer;
-            entered  => { bg.background = AppTheme.btn-surface-hover; }
-            exited   => { bg.background = AppTheme.btn-surface; }
             clicked  => { root.clicked(); }
         }
     }
@@ -137,10 +135,10 @@ export component Toolbar {
     in property <bool>     is-recording:       false;
     in property <[string]> source-lang-model:  [];
     in property <[string]> target-lang-model:  [];
-    in property <int>      source-lang-index:  0;
-    in property <int>      target-lang-index:  1;
+    in-out property <int>  source-lang-index:  0;
+    in-out property <int>  target-lang-index:  1;
     in property <[string]> mic-model:          [];
-    in property <int>      mic-index:          0;
+    in-out property <int>  mic-index:          0;
     // ── Callbacks ─────────────────────────────────────────────
     callback toggle-recording();
     callback source-lang-changed(int);
@@ -201,15 +199,15 @@ export component Toolbar {
             // ── Mic input selector ──────────────────────────
             SelectDropdown {
                 model:         root.mic-model;
-                current-index: root.mic-index;
+                current-index <=> root.mic-index;
                 icon:          "🎤";
-                min-width:     175px;
+                dropdown-min-width:     175px;
                 selected(i) => { root.mic-changed(i); }
             }
             // ── Source language ─────────────────────────────
             SelectDropdown {
                 model:         root.source-lang-model;
-                current-index: root.source-lang-index;
+                current-index <=> root.source-lang-index;
                 selected(i) => { root.source-lang-changed(i); }
             }
             // ── Arrow separator ─────────────────────────────
@@ -221,7 +219,7 @@ export component Toolbar {
             // ── Target language ─────────────────────────────
             SelectDropdown {
                 model:         root.target-lang-model;
-                current-index: root.target-lang-index;
+                current-index <=> root.target-lang-index;
                 selected(i) => { root.target-lang-changed(i); }
             }
             // ── Flexible spacer ─────────────────────────────
