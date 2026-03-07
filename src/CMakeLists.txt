@@ -21,9 +21,14 @@ endif()
 
 # Slint UI files - app-window.slint is the main entry point
 # It imports all component files automatically
+# slint_target_sources(${PROJECT_NAME} 
+#         ui/app-window.slint
+# )
+
 slint_target_sources(${PROJECT_NAME} 
-        ui/app-window.slint
+        test/main.slint
 )
+
 
 
 # Include asset copying utility

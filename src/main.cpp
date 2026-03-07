@@ -1,3 +1,5 @@
+#include "main.h"
+
 #include <slint.h>
 #include <spdlog/spdlog.h>
 
@@ -6,8 +8,6 @@
 #include <random>
 #include <thread>
 #include <vector>
-
-#include "app-window.h"
 
 class Timer
 {
@@ -240,7 +240,7 @@ int main()
     //     app->global<TranscriptionAdapter>().set_audio_levels(model);
     // });
 
-    auto         app = AppWindow::create();
+    auto app = AppWindow::create();
     // std::string  drawCommands;
     // slint::Timer timer;
     // timer.start(slint::TimerMode::Repeated, std::chrono::milliseconds(16), [&]() {

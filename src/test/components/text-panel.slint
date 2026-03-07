@@ -59,7 +59,6 @@ component EntryRow {
                 background:    root.accent;
                 opacity:       1.0;
                 // Blink animation
-                anim-cursor := PropertyAnimation {}
                 Timer {
                     interval: 500ms;
                     running:  true;
@@ -77,9 +76,13 @@ component ActionButton {
     in property <string> icon:  "⎘";
     callback clicked();
     height: 28px;
+    action-area := TouchArea {
+        mouse-cursor: pointer;
+        clicked  => { root.clicked(); }
+    }
     bg := Rectangle {
         border-radius: AppTheme.radius-md;
-        background:    AppTheme.btn-surface;
+        background:    action-area.has-hover ? AppTheme.btn-surface-hover : AppTheme.btn-surface;
         border-color:  AppTheme.border-subtle;
         border-width:  1px;
         animate background { duration: AppTheme.anim-fast; }
@@ -90,12 +93,6 @@ component ActionButton {
             alignment:     center;
             Text { text: root.icon;  color: AppTheme.text-secondary; font-size: AppTheme.font-sm; }
             Text { text: root.label; color: AppTheme.text-secondary; font-size: AppTheme.font-sm; }
-        }
-        TouchArea {
-            mouse-cursor: pointer;
-            entered  => { bg.background = AppTheme.btn-surface-hover; }
-            exited   => { bg.background = AppTheme.btn-surface; }
-            clicked  => { root.clicked(); }
         }
     }
 }
@@ -234,7 +231,6 @@ export component TextPanel {
                             background:    rgba(255, 255, 255, 0.03);
                             border-color:  AppTheme.border-subtle;
                             border-width:  1px;
-                            horizontal-alignment: center;
                             Text {
                                 text:                 "☰";
                                 color:                #334155;

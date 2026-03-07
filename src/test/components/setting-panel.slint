@@ -41,7 +41,6 @@ component SettingRow {
     in property <string> label:        "";
     in property <string> description:  "";
     in property <bool>   last:         false;
-    @children
     min-height: 48px;
     content := Rectangle {
         border-color:  last ? transparent : AppTheme.border-muted;
@@ -82,7 +81,6 @@ component SettingRow {
 component SettingSection {
     in property <string> title: "";
     in property <string> icon:  "⚙";
-    @children
     VerticalLayout {
         spacing: 8px;
         // Section heading
@@ -125,14 +123,14 @@ component SettingsSelect {
         background:    rgba(255, 255, 255, 0.07);
         border-color:  AppTheme.border-strong;
         border-width:  1px;
-        ComboBox {
+        combo := ComboBox {
             model:         root.model;
             current-index: root.current-index;
             x:             6px;
             y:             3px;
             width:         parent.width - 12px;
             height:        parent.height - 6px;
-            selected(i) => { root.selected(i); }
+            selected(value) => { root.selected(combo.current-index); }
         }
     }
 }
@@ -141,9 +139,8 @@ export component SettingsPanel {
     callback close();
     // Panel open/close animation
     in property <bool> open: false;
-    private property <length> panel-x: self.width;
+    private property <length> panel-x: open ? self.width - 420px : self.width;
     animate panel-x { duration: AppTheme.anim-slow; easing: ease-in-out; }
-    panel-x: open ? self.width - 420px : self.width;
     // ── Settings state ────────────────────────────────────
     private property <int>  model-idx:        4;   // whisper-large-v3
     private property <int>  quality-idx:      1;   // High
@@ -216,7 +213,7 @@ export component SettingsPanel {
                         width:         32px;
                         height:        32px;
                         border-radius: AppTheme.radius-md;
-                        background:    AppTheme.btn-surface;
+                        background:    close-area.has-hover ? AppTheme.btn-surface-hover : AppTheme.btn-surface;
                         border-color:  AppTheme.border-subtle;
                         border-width:  1px;
                         animate background { duration: AppTheme.anim-fast; }
@@ -227,10 +224,8 @@ export component SettingsPanel {
                             horizontal-alignment: center;
                             vertical-alignment:   center;
                         }
-                        TouchArea {
+                        close-area := TouchArea {
                             mouse-cursor: pointer;
-                            entered  => { close-btn.background = AppTheme.btn-surface-hover; }
-                            exited   => { close-btn.background = AppTheme.btn-surface; }
                             clicked  => { root.close(); }
                         }
                     }
@@ -367,7 +362,9 @@ export component SettingsPanel {
                         width:         110px;
                         height:        34px;
                         border-radius: AppTheme.radius-md;
-                        background:    @linear-gradient(135deg, #2563eb, #3b82f6);
+                        background:    save-area.has-hover 
+                            ? @linear-gradient(135deg, #1d4ed8, #2563eb)
+                            : @linear-gradient(135deg, #2563eb, #3b82f6);
                         animate background { duration: AppTheme.anim-fast; }
                         Text {
                             text:                 "Save & Close";
@@ -376,10 +373,8 @@ export component SettingsPanel {
                             horizontal-alignment: center;
                             vertical-alignment:   center;
                         }
-                        TouchArea {
+                        save-area := TouchArea {
                             mouse-cursor: pointer;
-                            entered  => { save-btn.background = @linear-gradient(135deg, #1d4ed8, #2563eb); }
-                            exited   => { save-btn.background = @linear-gradient(135deg, #2563eb, #3b82f6); }
                             clicked  => { root.close(); }
                         }
                     }

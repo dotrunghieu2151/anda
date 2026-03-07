@@ -15,7 +15,7 @@ component AudioLevelMeter {
         running:  true;
         triggered => {
             root.target = root.active
-                ? 0.18 + Math.abs(Math.sin(root.level * 12.0)) * 0.82
+                ? 0.18 + Math.abs(Math.sin((root.level * 12.0) * 1rad)) * 0.82
                 : 0.02;
             root.level += (root.target - root.level) * 0.14;
         }
@@ -157,8 +157,8 @@ export component StatusBar {
                     text:      (session-secs / 60 < 10 ? "0" : "")
                                + (session-secs / 60)
                                + ":"
-                               + (session-secs % 60 < 10 ? "0" : "")
-                               + (session-secs % 60);
+                               + (Math.mod(session-secs, 60) < 10 ? "0" : "")
+                               + Math.mod(session-secs, 60);
                     color:     is-recording ? AppTheme.text-secondary : AppTheme.text-muted;
                     font-size: AppTheme.font-sm;
                 }

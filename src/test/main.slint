@@ -7,7 +7,7 @@ import { Toolbar }         from "components/toolbar.slint";
 import { AudioVisualizer } from "components/audio-visualizer.slint";
 import { TextPanel, TranscriptEntry } from "components/text-panel.slint";
 import { StatusBar, ModelStatus }     from "components/status-bar.slint";
-import { SettingsPanel }   from "components/settings-panel.slint";
+import { SettingsPanel }   from "components/setting-panel.slint";
 // ── Language data ────────────────────────────────────────────
 global Languages {
     out property <[string]> labels: [
@@ -72,11 +72,16 @@ export component AppWindow inherits Window {
     }
     // ── Public callbacks (wired to Rust / native backend) ─────
     // Call these from the backend to push new transcript lines:
-    public callback push-transcript(TranscriptEntry);
-    public callback push-translation(TranscriptEntry);
-    public callback set-model-status(ModelStatus);
-    push-transcript(entry)   => { root.transcript-entries  += [entry]; }
-    push-translation(entry)  => { root.translation-entries += [entry]; }
+    // NOTE: Slint doesn't support direct array manipulation (push/append).
+    // In production, these callbacks should be handled in C++/Rust where
+    // the native code will reconstruct and set the entire array.
+    callback push-transcript(TranscriptEntry);
+    callback push-translation(TranscriptEntry);
+    callback set-model-status(ModelStatus);
+    // For testing purposes, we'll just replace with a single-entry array.
+    // In production, native code should append to the existing array.
+    push-transcript(entry)   => { root.transcript-entries = [entry]; }
+    push-translation(entry)  => { root.translation-entries = [entry]; }
     set-model-status(status) => { root.model-status = status; }
     // ── Root layout ───────────────────────────────────────────
     VerticalLayout {

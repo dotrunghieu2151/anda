@@ -6,7 +6,6 @@
   "dependencies": [
     "vcpkg-cmake",
     "vcpkg-cmake-config",
-    "corrosion",
     { "name": "rustbin", "version>=": "1.92.0", "host": true }
   ]
 }

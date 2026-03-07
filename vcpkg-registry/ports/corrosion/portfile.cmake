@@ -1,9 +1,13 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH CORROSION_SOURCE
     REPO "corrosion-rs/corrosion"
-    REF "v0.6.0"
-    SHA512 e1f7b74f9757057e9f2e929f3d3bcf73583b9fd1cd717038d285d8b3730ec0ba8c5fbd0986b2523080736e015a37a17de640bee14d8ffb5d4a253d3ebe8800c5
+    REF "v0.6.1"
+    SHA512 2b0d1ccafd5472f2938d084995662c586f19cb5cd4ead20fa25e9516d595eb5f756cb2d9abb12dccfa944b52a1f8002c69a1a4d955409c9d194c6d885a6d48ca
 )
+
+message(STATUS "Rust compiler: ${RUSTBIN_RUSTC_EXECUTABLE}")
+message(STATUS "Rust cargo: ${RUSTBIN_CARGO_EXECUTABLE}")
+
 vcpkg_cmake_configure(
     SOURCE_PATH "${CORROSION_SOURCE}"
     OPTIONS

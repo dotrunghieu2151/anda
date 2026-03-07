@@ -1,0 +1,241 @@
+// ============================================================
+// VoiceScribe AI — Toolbar Component
+// ============================================================
+import { ComboBox } from "std-widgets.slint";
+import { AppTheme } from "../theme.slint";
+// ── Styled language / mic selector dropdown ─────────────────
+component SelectDropdown {
+    in property <[string]> model:         [];
+    in property <int>      current-index: 0;
+    in property <string>   icon:          "";
+    in property <length>   min-width:     150px;
+    callback selected(int);
+    height: 34px;
+    min-width: root.min-width;
+    Rectangle {
+        border-radius:  AppTheme.radius-md;
+        background:     AppTheme.btn-surface;
+        border-color:   AppTheme.border-strong;
+        border-width:   1px;
+        HorizontalLayout {
+            padding-left:  10px;
+            padding-right:  8px;
+            spacing:        6px;
+            alignment:      center;
+            // Optional leading icon glyph
+            if root.icon != "": Text {
+                text:       root.icon;
+                color:      AppTheme.text-secondary;
+                font-size:  AppTheme.font-base;
+            }
+            ComboBox {
+                model:          root.model;
+                current-index:  root.current-index;
+                horizontal-stretch: 1;
+                selected(idx) => { root.selected(idx); }
+            }
+        }
+        // Hover overlay
+        hover-rect := Rectangle {
+            border-radius: parent.border-radius;
+            background:    transparent;
+            animate background { duration: AppTheme.anim-fast; }
+        }
+        ta := TouchArea {
+            mouse-cursor: pointer;
+            entered => { hover-rect.background = AppTheme.btn-surface-hover; }
+            exited  => { hover-rect.background = transparent; }
+        }
+    }
+}
+// ── Recording button with animated state ────────────────────
+component RecordButton {
+    in property <bool> is-recording: false;
+    callback clicked();
+    height: 36px;
+    width:  165px;
+    btn-bg := Rectangle {
+        border-radius: AppTheme.radius-md;
+        border-width:  1px;
+        border-color:  is-recording
+            ? AppTheme.btn-danger-border
+            : rgba(99, 179, 237, 0.30);
+        background: is-recording
+            ? AppTheme.btn-danger
+            : @linear-gradient(135deg, #2563eb, #3b82f6);
+        animate background  { duration: AppTheme.anim-normal; }
+        animate border-color { duration: AppTheme.anim-normal; }
+        // Drop shadow / glow strip
+        glow := Rectangle {
+            y:             parent.height - 2px;
+            height:        4px;
+            width:         parent.width * 0.6;
+            x:             parent.width * 0.2;
+            border-radius: AppTheme.radius-full;
+            background:    is-recording
+                ? rgba(252, 129, 129, 0.35)
+                : AppTheme.btn-primary-glow;
+            animate background { duration: AppTheme.anim-normal; }
+        }
+        HorizontalLayout {
+            spacing:      8px;
+            alignment:    center;
+            padding-left: 14px;
+            padding-right: 14px;
+            // Icon: square (stop) or circle dot (record)
+            indicator := Rectangle {
+                width:         10px;
+                height:        10px;
+                border-radius: is-recording ? AppTheme.radius-sm : AppTheme.radius-full;
+                background:    is-recording ? AppTheme.accent-red : white;
+                animate border-radius { duration: AppTheme.anim-fast; }
+                animate background    { duration: AppTheme.anim-normal; }
+            }
+            label := Text {
+                text:       is-recording ? "Stop Recording" : "Start Recording";
+                color:      is-recording ? AppTheme.accent-red : white;
+                font-size:  AppTheme.font-base;
+                animate color { duration: AppTheme.anim-normal; }
+            }
+        }
+        TouchArea {
+            mouse-cursor: pointer;
+            clicked => { root.clicked(); }
+        }
+    }
+}
+// ── Icon button (settings) ───────────────────────────────────
+component IconButton {
+    in property <string> icon: "⚙";
+    callback clicked();
+    width:  36px;
+    height: 36px;
+    bg := Rectangle {
+        border-radius: AppTheme.radius-md;
+        background:    AppTheme.btn-surface;
+        border-color:  AppTheme.border-subtle;
+        border-width:  1px;
+        animate background { duration: AppTheme.anim-fast; }
+        Text {
+            text:               root.icon;
+            color:              AppTheme.text-secondary;
+            font-size:          AppTheme.font-lg;
+            horizontal-alignment: center;
+            vertical-alignment:   center;
+        }
+        TouchArea {
+            mouse-cursor: pointer;
+            entered  => { bg.background = AppTheme.btn-surface-hover; }
+            exited   => { bg.background = AppTheme.btn-surface; }
+            clicked  => { root.clicked(); }
+        }
+    }
+}
+// ── Toolbar root component ───────────────────────────────────
+export component Toolbar {
+    // ── Input properties ──────────────────────────────────────
+    in property <bool>     is-recording:       false;
+    in property <[string]> source-lang-model:  [];
+    in property <[string]> target-lang-model:  [];
+    in property <int>      source-lang-index:  0;
+    in property <int>      target-lang-index:  1;
+    in property <[string]> mic-model:          [];
+    in property <int>      mic-index:          0;
+    // ── Callbacks ─────────────────────────────────────────────
+    callback toggle-recording();
+    callback source-lang-changed(int);
+    callback target-lang-changed(int);
+    callback mic-changed(int);
+    callback open-settings();
+    height: 64px;
+    Rectangle {
+        background: rgba(13, 17, 26, 0.97);
+        clip: true;
+        // Bottom separator line
+        Rectangle {
+            y:          parent.height - 1px;
+            height:     1px;
+            background: AppTheme.border-subtle;
+        }
+        HorizontalLayout {
+            padding-left:  16px;
+            padding-right: 16px;
+            padding-top:   0px;
+            padding-bottom: 0px;
+            spacing:        12px;
+            alignment:      center;
+            // ── App logo ────────────────────────────────────
+            Rectangle {
+                width:         28px;
+                height:        28px;
+                border-radius: 8px;
+                background:    @linear-gradient(135deg, #3b82f6, #8b5cf6);
+                Text {
+                    text:                 "◉";
+                    color:                white;
+                    font-size:            12px;
+                    horizontal-alignment: center;
+                    vertical-alignment:   center;
+                }
+            }
+            // ── App name ────────────────────────────────────
+            HorizontalLayout {
+                spacing: 0px;
+                Text {
+                    text:      "VoiceScribe";
+                    color:     AppTheme.text-primary;
+                    font-size: AppTheme.font-md;
+                }
+                Text {
+                    text:      " AI";
+                    color:     AppTheme.accent-blue;
+                    font-size: AppTheme.font-md;
+                }
+            }
+            // ── Vertical divider ────────────────────────────
+            Rectangle {
+                width:      1px;
+                height:     32px;
+                background: AppTheme.border-strong;
+            }
+            // ── Mic input selector ──────────────────────────
+            SelectDropdown {
+                model:         root.mic-model;
+                current-index: root.mic-index;
+                icon:          "🎤";
+                min-width:     175px;
+                selected(i) => { root.mic-changed(i); }
+            }
+            // ── Source language ─────────────────────────────
+            SelectDropdown {
+                model:         root.source-lang-model;
+                current-index: root.source-lang-index;
+                selected(i) => { root.source-lang-changed(i); }
+            }
+            // ── Arrow separator ─────────────────────────────
+            Text {
+                text:      "→";
+                color:     AppTheme.text-muted;
+                font-size: AppTheme.font-lg;
+            }
+            // ── Target language ─────────────────────────────
+            SelectDropdown {
+                model:         root.target-lang-model;
+                current-index: root.target-lang-index;
+                selected(i) => { root.target-lang-changed(i); }
+            }
+            // ── Flexible spacer ─────────────────────────────
+            Rectangle { horizontal-stretch: 1; }
+            // ── Start / Stop button ─────────────────────────
+            RecordButton {
+                is-recording: root.is-recording;
+                clicked => { root.toggle-recording(); }
+            }
+            // ── Settings button ─────────────────────────────
+            IconButton {
+                icon: "⚙";
+                clicked => { root.open-settings(); }
+            }
+        }
+    }
+}
