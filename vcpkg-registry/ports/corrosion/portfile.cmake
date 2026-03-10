@@ -13,6 +13,7 @@ vcpkg_cmake_configure(
     OPTIONS
       -DRust_COMPILER=${RUSTBIN_RUSTC_EXECUTABLE}
       -DRust_CARGO=${RUSTBIN_CARGO_EXECUTABLE}
+      -DCORROSION_BUILD_TESTS=OFF
 )
 
 vcpkg_cmake_install()

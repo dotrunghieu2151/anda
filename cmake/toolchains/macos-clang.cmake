@@ -3,7 +3,10 @@ set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "Minimum macOS version")
-# Let CMake auto-detect the native architecture instead of forcing universal binary
+# Build for native architecture only (arm64 on Apple Silicon, x86_64 on Intel)
+# This ensures vcpkg packages match the build architecture
+# Note: On Apple Silicon, this should be "arm64". On Intel Macs, use "x86_64"
+
 # set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Build for both Apple Silicon and Intel")
 
 set(BASE_FLAGS "-Wall -Wextra -Wpedantic -Wshadow -Wconversion -fvisibility=hidden -fPIC")

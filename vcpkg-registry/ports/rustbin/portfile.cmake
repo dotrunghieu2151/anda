@@ -13,9 +13,18 @@ elseif(VCPKG_TARGET_IS_LINUX)
     set(RUST_SHA512 "6a2e4c2996726815efdb1ce89305bbcba863dad46f1510dd57f9732fc689f0bbccdd453ac1984537a77fa90c5e19c1b73d27acb5f976481ab020b9eeeb102e49")
 elseif(VCPKG_TARGET_IS_OSX)
     set(RUST_VERSION "1.92.0")
-    set(RUST_URL "https://static.rust-lang.org/dist/rust-${RUST_VERSION}-x86_64-apple-darwin.tar.gz")
-    set(RUST_FILENAME "rust-${RUST_VERSION}-x86_64-macos.tar.gz")
-    set(RUST_SHA512 "2f9610a73048efac56d2e253eb8b800ee7bb07b279b3cfedd7ce9c35d128572c44b32b10f6be0e21a88b669641bca15170c5230143841e5efe8d370d8809a0ce")
+    # Detect architecture: check CMAKE_OSX_ARCHITECTURES or system architecture
+    if(VCPKG_TARGET_ARCHITECTURE MATCHES "arm64")
+        set(RUST_ARCH "aarch64")
+        set(RUST_URL "https://static.rust-lang.org/dist/rust-${RUST_VERSION}-aarch64-apple-darwin.tar.gz")
+        set(RUST_FILENAME "rust-${RUST_VERSION}-aarch64-macos.tar.gz")
+        set(RUST_SHA512 "367f2f9c68cac18b7dbe6efec60f110505a1d33a729a43d3d46a14d35d95efa6008ef0e9b87c33c92f8684e965fcac6922347186b0c427dd526ca06ff9883c06")
+    else()
+        set(RUST_ARCH "x86_64")
+        set(RUST_URL "https://static.rust-lang.org/dist/rust-${RUST_VERSION}-x86_64-apple-darwin.tar.gz")
+        set(RUST_FILENAME "rust-${RUST_VERSION}-x86_64-macos.tar.gz")
+        set(RUST_SHA512 "2f9610a73048efac56d2e253eb8b800ee7bb07b279b3cfedd7ce9c35d128572c44b32b10f6be0e21a88b669641bca15170c5230143841e5efe8d370d8809a0ce")
+    endif()
 else()
     message(FATAL_ERROR "Unsupported platform for Rust")
 endif()
@@ -34,17 +43,25 @@ vcpkg_extract_source_archive_ex(
     ARCHIVE "${RUST_INSTALLER}"
 )
 
+if(VCPKG_TARGET_IS_OSX OR VCPKG_TARGET_IS_LINUX) 
+    # issue: https://discourse.cmake.org/t/problem-with-rpath-setting-in-executable-built-as-a-vcpkg-port/14320
+    # basically vcpkg is setting the incorrect rpath for executables
+    set(VCPKG_FIXUP_MACHO_RPATH OFF)
+endif()
+
 # Copy everything to tools directory
+# rustc binaries
 file(INSTALL
-    DESTINATION "${CURRENT_PACKAGES_DIR}/tools/${PORT}"
+    DESTINATION "${CURRENT_PACKAGES_DIR}/tools/${PORT}/bin"
     TYPE DIRECTORY
-    FILES "${SOURCE_PATH}/rustc"
+    FILES "${SOURCE_PATH}/rustc/bin/rustc"
 )
 
+# rustc internal libraries
 file(INSTALL
-    DESTINATION "${CURRENT_PACKAGES_DIR}/tools/${PORT}"
+    DESTINATION "${CURRENT_PACKAGES_DIR}/tools/${PORT}/lib"
     TYPE DIRECTORY
-    FILES "${SOURCE_PATH}/cargo"
+    FILES "${SOURCE_PATH}/rustc/lib/"
 )
 
 # Find the rust-std component directory
@@ -61,7 +78,7 @@ list(GET RUST_STD_DIRS 0 RUST_STD_DIR)
 # The rust-std component contains lib/rustlib/ which needs to be merged
 if(EXISTS "${RUST_STD_DIR}/lib/rustlib")
     file(INSTALL
-        DESTINATION "${CURRENT_PACKAGES_DIR}/tools/${PORT}/rustc/lib"
+        DESTINATION "${CURRENT_PACKAGES_DIR}/tools/${PORT}/lib"
         TYPE DIRECTORY
         FILES "${RUST_STD_DIR}/lib/rustlib"
     )
@@ -69,6 +86,36 @@ else()
     message(FATAL_ERROR "rust-std component does not contain lib/rustlib directory")
 endif()
 
+# cargo binaries
+file(INSTALL
+    DESTINATION "${CURRENT_PACKAGES_DIR}/tools/${PORT}/bin"
+    TYPE DIRECTORY
+    FILES "${SOURCE_PATH}/cargo/bin/"
+)
+
+# fix @rpath on macos
+if(VCPKG_TARGET_IS_OSX)
+    message(STATUS "Fixing rustc rpath...")
+
+    set(RUST_BIN_DIR "${CURRENT_PACKAGES_DIR}/tools/${PORT}/bin")
+
+    foreach(bin rustc cargo)
+        set(target "${RUST_BIN_DIR}/${bin}")
+
+        if(EXISTS "${target}")
+            # Remove incorrect rpath if present
+            execute_process(
+                COMMAND install_name_tool
+                    -delete_rpath @loader_path/../../../lib
+                    "${target}"
+                RESULT_VARIABLE _res
+                ERROR_QUIET
+            )
+
+            # Ignore failure (path may not exist)
+        endif()
+    endforeach()
+endif()
 
 configure_file("${CMAKE_CURRENT_LIST_DIR}/rustbinConfig.cmake"
                "${CURRENT_PACKAGES_DIR}/share/${PORT}/rustbinConfig.cmake"
